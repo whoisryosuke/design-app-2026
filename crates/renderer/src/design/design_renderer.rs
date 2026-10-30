@@ -42,7 +42,7 @@ impl DesignRenderer {
     pub fn dispatch(&mut self, cmd_js: JsValue) -> Result<(), JsValue> {
         // Convert JS object directly to Rust Enum
         let cmd = serde_wasm_bindgen::from_value::<DesignCommand>(cmd_js)
-            .map_err(|_| JsValue::from_str("Element is not a <canvas>"))?;
+            .map_err(|_| JsValue::from_str("Not a proper command. Maybe mispelled?"))?;
         match cmd {
             DesignCommand::AddLayer => Ok(()),
             DesignCommand::SelectLayer { layer_id } => {

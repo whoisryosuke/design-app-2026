@@ -7,22 +7,20 @@ use vello_gpu::{
 };
 use wasm_bindgen::JsValue;
 
-use crate::design::layer::{Layer, LayerListResponse};
+use crate::design::layer::{layer::Layer, layers::Layers};
 
 #[derive(Serialize, Clone)]
 pub struct AppState {
-    layers: SlotMap<DefaultKey, Layer>,
-    selected_layer: DefaultKey,
+    layers: Layers,
     width: u16,
     height: u16,
 }
 
 impl AppState {
     pub fn new(width: u16, height: u16) -> Self {
-        let layers = SlotMap::new();
+        let layers = Layers::new();
         Self {
             layers,
-            selected_layer: Default::default(),
             width,
             height,
         }
@@ -34,27 +32,15 @@ impl AppState {
     }
 
     pub fn add_layer(&mut self, layer: Layer) {
-        self.layers.insert(layer);
+        self.layers.add_layer(layer);
     }
 
     pub fn get_layers(&self) -> Option<JsValue> {
-        let list: Vec<LayerListResponse> = self
-            .layers
-            .iter()
-            .map(|(k, v)| LayerListResponse {
-                id: k.data().as_ffi(),
-                name: v.name.clone(),
-                visible: v.visible,
-            })
-            .collect();
-        serde_wasm_bindgen::to_value(&list).ok()
+        self.layers.get_layers()
     }
 
     pub fn select_layer(&mut self, layer_key: u64) {
-        let key_data = KeyData::from_ffi(layer_key);
-        let slot_map_key: DefaultKey = key_data.into();
-
-        self.selected_layer = slot_map_key;
+        self.layers.select_layer(layer_key);
     }
 
     /// Build a simple scene: background, a circle, and an outlined rounded rect.
