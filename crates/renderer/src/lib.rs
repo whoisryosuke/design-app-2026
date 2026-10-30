@@ -7,6 +7,7 @@
 use std::collections::BTreeMap;
 
 use fractional_index::FractionalIndex;
+use serde::Serialize;
 use slotmap::{DefaultKey, SlotMap};
 use vello_common::{
     color::palette::css,
@@ -18,13 +19,21 @@ use wasm_bindgen::prelude::*;
 use web_sys::HtmlCanvasElement;
 use wgpu::CurrentSurfaceTexture;
 
+#[derive(Serialize)]
+pub enum FrameLayout {
+    Flex,
+    Grid,
+}
+
+#[derive(Serialize)]
 pub enum LayerKind {
     Group,
-    Frame {},
-    Rect { width: f32, height: f32 },
+    Frame { layout: FrameLayout },
+    Rect,
     Text(String),
 }
 
+#[derive(Serialize)]
 pub struct Layer {
     pub name: String,
     pub kind: LayerKind,
