@@ -121,6 +121,10 @@ impl AppState {
 
         scene
     }
+
+    pub fn frame(&self, timestamp: f64) -> Scene {
+        self.build_scene()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -267,9 +271,9 @@ impl RendererContext {
 
 #[wasm_bindgen]
 pub struct DesignRenderer {
-    state: AppState,
+    state: Rc<RefCell<AppState>>,
     canvas: Option<HtmlCanvasElement>,
-    renderer_context: RendererContext,
+    renderer_context: Rc<RefCell<RendererContext>>,
 }
 
 #[wasm_bindgen]
@@ -287,9 +291,9 @@ impl DesignRenderer {
         let renderer_context = RendererContext::new(canvas.clone()).await;
 
         Ok(DesignRenderer {
-            state,
+            state: Rc::new(RefCell::new(state)),
             canvas: Some(canvas),
-            renderer_context,
+            renderer_context: Rc::new(RefCell::new(renderer_context)),
         })
     }
 
@@ -307,50 +311,47 @@ impl DesignRenderer {
     }
 
     async fn render(&mut self) -> Result<(), JsValue> {
-        let canvas = self
-            .canvas
-            .clone()
-            .ok_or(JsValue::from_str("No canvas set"))?;
-
-        let width = canvas.width() as u16;
-        let height = canvas.height() as u16;
-        let app_state = AppState::new(width, height);
-        let scene = app_state.build_scene();
-        self.renderer_context.render(&scene);
+        let scene = self.state.borrow().build_scene();
+        self.renderer_context.borrow_mut().render(&scene);
 
         Ok(())
     }
+
+    #[wasm_bindgen]
+    pub async fn run(&self) {
+        {
+            // Create a placeholder for the RAF closure to loop again
+            let f = Rc::new(RefCell::new(None::<Closure<dyn FnMut(f64)>>));
+            // Closure for the initial/first RAF closure
+            let g = f.clone();
+
+            // Clone pointers to state (via `Rc`) to move into closure
+            let app_state = self.state.clone();
+            let renderer = self.renderer_context.clone();
+
+            // Define our animation function / closure
+            *g.borrow_mut() = Some(Closure::wrap(Box::new(move |timestamp: f64| {
+                // Update state with latest time and get latest scene data
+                let scene = app_state.borrow_mut().frame(timestamp);
+                // Render scene data
+                renderer.borrow_mut().render(&scene);
+
+                // Keep looping
+                request_animation_frame(f.borrow().as_ref().unwrap());
+            }) as Box<dyn FnMut(f64)>));
+
+            // Start animation using wasm_bindgen/browser's RAF
+            request_animation_frame(g.borrow().as_ref().unwrap());
+        }
+    }
 }
 
-/// Debug entry point.
-/// Finds canvas by ID and renders scene inside it.
-#[wasm_bindgen]
-pub async fn run(canvas_id: &str) -> Result<(), JsValue> {
+/// This runs automatically when WASM is initialized.
+/// Currently used for debugging.
+#[wasm_bindgen(start)]
+pub fn main_js() {
+    // This runs automatically on WASM load
     console_error_panic_hook::set_once();
-    let canvas = web_sys::window()
-        .and_then(|w| w.document())
-        .and_then(|d| d.get_element_by_id(canvas_id))
-        .ok_or_else(|| JsValue::from_str(&format!("No element with id `{canvas_id}`")))?
-        .dyn_into::<HtmlCanvasElement>()
-        .map_err(|_| JsValue::from_str("Element is not a <canvas>"))?;
-
-    let width = canvas.width() as u16;
-    let height = canvas.height() as u16;
-    let app_state = AppState::new(width, height);
-    let scene = app_state.build_scene();
-
-    {
-        let f = Rc::new(RefCell::new(None::<Closure<dyn FnMut(f64)>>));
-        let g = f.clone();
-        let app_state = app_state.clone();
-        *g.borrow_mut() = Some(Closure::wrap(Box::new(move |timestamp: f64| {
-            request_animation_frame(f.borrow().as_ref().unwrap());
-        }) as Box<dyn FnMut(f64)>));
-
-        request_animation_frame(g.borrow().as_ref().unwrap());
-    }
-
-    Ok(())
 }
 
 #[wasm_bindgen]
