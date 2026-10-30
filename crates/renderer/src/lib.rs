@@ -102,7 +102,7 @@ impl AppState {
     }
 
     /// Build a simple scene: background, a circle, and an outlined rounded rect.
-    pub fn build_scene(&self) -> Scene {
+    pub fn build_scene(&self, timestamp: f64) -> Scene {
         let mut scene = Scene::new(self.width, self.height);
 
         // Background
@@ -110,20 +110,31 @@ impl AppState {
         scene.fill_rect(&Rect::new(0.0, 0.0, self.width as f64, self.height as f64));
 
         // Filled circle
+        let distance = 40.0;
+        let animation_offset = (timestamp / 420.0).sin() * distance;
         scene.set_paint(css::ORANGE);
-        scene.fill_path(&Circle::new((400.0, 300.0), 120.0).to_path(0.1));
+        scene.fill_path(&Circle::new((400.0 + animation_offset, 300.0), 120.0).to_path(0.1));
 
         // Stroked rounded rectangle
         scene.set_transform(Affine::IDENTITY);
         scene.set_stroke(Stroke::new(8.0));
         scene.set_paint(css::WHITE);
-        scene.stroke_path(&RoundedRect::new(200.0, 120.0, 600.0, 480.0, 24.0).to_path(0.1));
+        scene.stroke_path(
+            &RoundedRect::new(
+                200.0 + animation_offset,
+                120.0 + animation_offset,
+                600.0 + animation_offset,
+                480.0 + animation_offset,
+                24.0,
+            )
+            .to_path(0.1),
+        );
 
         scene
     }
 
     pub fn frame(&self, timestamp: f64) -> Scene {
-        self.build_scene()
+        self.build_scene(timestamp)
     }
 }
 
@@ -311,7 +322,7 @@ impl DesignRenderer {
     }
 
     async fn render(&mut self) -> Result<(), JsValue> {
-        let scene = self.state.borrow().build_scene();
+        let scene = self.state.borrow().build_scene(0.0);
         self.renderer_context.borrow_mut().render(&scene);
 
         Ok(())
