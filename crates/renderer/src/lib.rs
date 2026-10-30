@@ -4,6 +4,10 @@
 
 #![cfg(target_arch = "wasm32")]
 
+use std::collections::BTreeMap;
+
+use fractional_index::FractionalIndex;
+use slotmap::{DefaultKey, SlotMap};
 use vello_common::{
     color::palette::css,
     fearless_simd::Level,
@@ -14,8 +18,62 @@ use wasm_bindgen::prelude::*;
 use web_sys::HtmlCanvasElement;
 use wgpu::CurrentSurfaceTexture;
 
-const WIDTH: u16 = 800;
-const HEIGHT: u16 = 600;
+pub enum LayerKind {
+    Group,
+    Frame {},
+    Rect { width: f32, height: f32 },
+    Text(String),
+}
+
+pub struct Layer {
+    pub name: String,
+    pub kind: LayerKind,
+    pub position: (f64, f64),
+    pub width: f64,
+    pub height: f64,
+    pub visible: bool,
+    pub opacity: f32,
+    pub parent: Option<DefaultKey>,
+    pub items: BTreeMap<FractionalIndex, DefaultKey>,
+}
+
+pub struct AppState {
+    layers: SlotMap<DefaultKey, Layer>,
+    width: u16,
+    height: u16,
+}
+
+impl AppState {
+    pub fn new(width: u16, height: u16) -> Self {
+        let layers = SlotMap::new();
+        Self {
+            layers,
+            width,
+            height,
+        }
+    }
+
+    /// Build a simple scene: background, a circle, and an outlined rounded rect.
+    pub fn build_scene(&self) -> Scene {
+        let mut scene = Scene::new(self.width, self.height);
+
+        // Background
+        scene.set_paint(css::BLUE);
+        scene.fill_rect(&Rect::new(0.0, 0.0, self.width as f64, self.height as f64));
+
+        // Filled circle
+        scene.set_paint(css::ORANGE);
+        scene.fill_path(&Circle::new((400.0, 300.0), 120.0).to_path(0.1));
+
+        // Stroked rounded rectangle
+        scene.set_transform(Affine::IDENTITY);
+        scene.set_stroke(Stroke::new(8.0));
+        scene.set_paint(css::WHITE);
+        scene.stroke_path(&RoundedRect::new(200.0, 120.0, 600.0, 480.0, 24.0).to_path(0.1));
+
+        scene
+    }
+}
 
 /// Debug entry point.
 /// Finds canvas by ID and renders scene inside it.
@@ -29,31 +87,13 @@ pub async fn run(canvas_id: &str) -> Result<(), JsValue> {
         .dyn_into::<HtmlCanvasElement>()
         .map_err(|_| JsValue::from_str("Element is not a <canvas>"))?;
 
-    let scene = build_scene();
+    let width = canvas.width() as u16;
+    let height = canvas.height() as u16;
+    let app_state = AppState::new(width, height);
+    let scene = app_state.build_scene();
     render_once(canvas, &scene).await;
 
     Ok(())
-}
-
-/// Build a simple scene: background, a circle, and an outlined rounded rect.
-fn build_scene() -> Scene {
-    let mut scene = Scene::new(WIDTH, HEIGHT);
-
-    // Background
-    scene.set_paint(css::BLUE);
-    scene.fill_rect(&Rect::new(0.0, 0.0, WIDTH as f64, HEIGHT as f64));
-
-    // Filled circle
-    scene.set_paint(css::ORANGE);
-    scene.fill_path(&Circle::new((400.0, 300.0), 120.0).to_path(0.1));
-
-    // Stroked rounded rectangle
-    scene.set_transform(Affine::IDENTITY);
-    scene.set_stroke(Stroke::new(8.0));
-    scene.set_paint(css::WHITE);
-    scene.stroke_path(&RoundedRect::new(200.0, 120.0, 600.0, 480.0, 24.0).to_path(0.1));
-
-    scene
 }
 
 /// Set up wgpu (WebGPU backend) for the canvas and render the scene a single time.
