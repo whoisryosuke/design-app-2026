@@ -3,13 +3,18 @@ import heroImg from "./assets/hero.png";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "./assets/vite.svg";
 import "./App.css";
-import init, { run } from "design-app-renderer";
+import init, { DesignRenderer } from "design-app-renderer";
 
 let started: Promise<void> | null = null;
 
+async function initializeRenderer() {
+  const renderer = await DesignRenderer.create("preview");
+  await renderer.run();
+}
+
 function runWasm() {
   if (!started) {
-    started = init().then(() => run("preview"));
+    started = init().then(async () => await initializeRenderer());
   }
   return started;
 }
