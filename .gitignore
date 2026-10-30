@@ -25,5 +25,5 @@ dist-ssr
 
 # Rust specific
 crates/*/target
-crates/target
+target
 crates/**/pkg/
