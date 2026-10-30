@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "renderer",
+]
+resolver = "2"
+
+[profile.wasm-release]
+inherits = "release"
