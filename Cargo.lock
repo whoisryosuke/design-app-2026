@@ -389,6 +389,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fractional_index"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce01fad85c73f947e62a39152c7b0f785af7f44859da36e421c42a3023bcbe3a"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1213,6 +1222,8 @@ name = "renderer"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
+ "fractional_index",
+ "slotmap",
  "vello_common",
  "vello_gpu",
  "wasm-bindgen",
@@ -1337,6 +1348,7 @@ version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038"
 dependencies = [
+ "serde",
  "version_check",
 ]
 
