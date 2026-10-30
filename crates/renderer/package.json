@@ -1,0 +1,21 @@
+{
+  "name": "design-app-renderer",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {},
+  "keywords": [],
+  "author": "whoisryosuke",
+  "license": "MIT",
+  "devDependencies": {},
+  "peerDependencies": {},
+  "exports": {
+    ".": {
+      "types": "./pkg/renderer.d.ts",
+      "import": "./pkg/renderer.js"
+    },
+    "./wasm/*": {
+      "types": "./pkg/renderer_bg.d.ts",
+      "import": "./pkg/renderer_bg.wasm"
+    }
+  }
+}
