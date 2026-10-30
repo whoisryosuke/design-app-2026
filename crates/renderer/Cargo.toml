@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+console_error_panic_hook = "0.1.7"
 vello_common = "0.3.0"
-vello_gpu = "0.3.0"
+vello_gpu = {version = "0.3.0", features = ["text", "wgpu", "wgpu_default"] }
 wasm-bindgen = "=0.2.129"
-web-sys = "0.3.106"
+wasm-bindgen-futures = "0.4.79"
+web-sys = {version = "0.3.106", features= ["Window", "Document", "HtmlCanvasElement", "Element"]}
 wgpu = "30.0.1"
 
 [lib]
