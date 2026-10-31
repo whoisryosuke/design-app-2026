@@ -4,6 +4,11 @@ import "@fontsource-variable/instrument-sans/wght.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/700.css";
 import { Stack } from "../../styled-system/jsx/stack";
+import { css } from "../../styled-system/css/css";
+
+let style = css({
+  backgroundColor: "gray.1",
+});
 
 export type AppWrapperProps = {
   theme?: "light" | "dark";
