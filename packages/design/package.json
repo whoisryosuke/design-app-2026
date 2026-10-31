@@ -1,0 +1,69 @@
+{
+  "name": "design-app-design-system",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "prepare": "panda codegen",
+    "watch": "panda codegen --watch",
+    "new": "panda init",
+    "panda": "panda",
+    "emit-pkg": "panda emit-pkg"
+  },
+  "keywords": [],
+  "author": "whoisryosuke",
+  "license": "MIT",
+  "devDependencies": {
+    "@pandacss/dev": "^2.4.0",
+    "@types/react": "^19.2.7",
+    "react": "^19.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "exports": {
+    "./panda/*": "./dist/panda/*",
+    "./css": {
+      "types": "./dist/css/index.d.ts",
+      "default": "./dist/css/index.mjs"
+    },
+    "./css/*": {
+      "types": "./dist/css/*.d.ts",
+      "default": "./dist/css/*.mjs"
+    },
+    "./recipes": {
+      "types": "./dist/recipes/index.d.ts",
+      "default": "./dist/recipes/index.mjs"
+    },
+    "./recipes/*": {
+      "types": "./dist/recipes/*.d.ts",
+      "default": "./dist/recipes/*.mjs"
+    },
+    "./patterns": {
+      "types": "./dist/patterns/index.d.ts",
+      "default": "./dist/patterns/index.mjs"
+    },
+    "./patterns/*": {
+      "types": "./dist/patterns/*.d.ts",
+      "default": "./dist/patterns/*.mjs"
+    },
+    "./jsx": {
+      "types": "./dist/jsx/index.d.ts",
+      "default": "./dist/jsx/index.mjs"
+    },
+    "./jsx/*": {
+      "types": "./dist/jsx/*.d.ts",
+      "default": "./dist/jsx/*.mjs"
+    },
+    "./tokens": {
+      "types": "./dist/tokens/index.d.ts",
+      "default": "./dist/tokens/index.mjs"
+    },
+    "./helpers": {
+      "types": "./dist/helpers.d.ts",
+      "default": "./dist/helpers.mjs"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts"
+    }
+  }
+}

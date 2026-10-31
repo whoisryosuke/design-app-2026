@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import init, { DesignRenderer } from "design-app-renderer";
 import type { DesignCommand, DraftLayer } from "design-app-renderer-types";
+import { useAtom } from "jotai";
+import { wasmLoadedAtom } from "./store/app";
 
 async function initializeRenderer() {
   const renderer = await DesignRenderer.create("preview");
@@ -10,10 +12,9 @@ async function initializeRenderer() {
 }
 
 function App() {
-  const [count, setCount] = useState(0);
-  const [wasmLoaded, setWasmLoaded] = useState(false);
   const renderer = useRef<DesignRenderer | null>(null);
   const rendererLoaded = useRef(false);
+  const [wasmLoaded, setWasmLoaded] = useAtom(wasmLoadedAtom);
 
   // Handle initializing WASM + Renderer
   useEffect(() => {

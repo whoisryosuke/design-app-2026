@@ -4,19 +4,26 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "prepare": "panda codegen",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/instrument-sans": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "design-app-design-system": "workspace:*",
     "design-app-renderer": "workspace:*",
     "design-app-renderer-types": "workspace:*",
+    "jotai": "^3.0.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
+    "@pandacss/dev": "^2.4.0",
+    "@pandacss/preset-base": "2.4.0",
     "@rolldown/plugin-babel": "^0.2.4",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^24.19.2",
