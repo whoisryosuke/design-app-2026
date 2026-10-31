@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import heroImg from "./assets/hero.png";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
 import "./App.css";
 import init, { DesignRenderer } from "design-app-renderer";
+import type { DesignCommand, DraftLayer } from "design-app-renderer-types";
 
 async function initializeRenderer() {
   const renderer = await DesignRenderer.create("preview");
@@ -34,11 +32,11 @@ function App() {
     if (wasmLoaded && !rendererLoaded.current) startRenderer();
   }, [wasmLoaded]);
 
-  // const dispatch = (command: DesignCommand) => {
-  //   if (!renderer.current) return;
+  const dispatch = (command: DesignCommand) => {
+    if (!renderer.current) return;
 
-  //   renderer.current.dispatch();
-  // };
+    renderer.current.dispatch(command);
+  };
 
   return (
     <>
