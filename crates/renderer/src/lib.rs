@@ -14,7 +14,6 @@ mod renderer;
 /// Currently used for debugging.
 #[wasm_bindgen(start)]
 pub fn main_js() {
-    // This runs automatically on WASM load
     console_error_panic_hook::set_once();
 }
 

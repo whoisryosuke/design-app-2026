@@ -22,7 +22,7 @@ impl Layers {
         self.layers.insert(layer.into());
     }
 
-    pub fn get_layers(&self) -> Option<JsValue> {
+    pub fn get_layer_list(&self) -> Option<JsValue> {
         let list: Vec<LayerListResponse> = self
             .layers
             .iter()
@@ -40,5 +40,14 @@ impl Layers {
         let slot_map_key: DefaultKey = key_data.into();
 
         self.selected_layer = slot_map_key;
+    }
+
+    pub fn get_layers_by_parent(&self, parent: Option<DefaultKey>) -> Vec<(DefaultKey, &Layer)> {
+        let layer_batch = self
+            .layers
+            .iter()
+            .filter(|(_, layer)| layer.parent == parent)
+            .collect();
+        layer_batch
     }
 }

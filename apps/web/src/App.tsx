@@ -38,8 +38,31 @@ function App() {
     renderer.current.dispatch(command);
   };
 
+  const handleCreateLayer = () => {
+    const width = Math.round(Math.random() * 420);
+    const height = Math.round(Math.random() * 420);
+    dispatch({
+      AddLayer: {
+        layer: {
+          name: "Test",
+          kind: "Rect",
+          position: [0, 0],
+          width,
+          height,
+          opacity: 1.0,
+          parent: null,
+          visible: true,
+          items: [],
+        },
+      },
+    });
+  };
+
   return (
     <>
+      <div style={{ position: "fixed", top: 32, right: 32 }}>
+        <button onClick={handleCreateLayer}>Create layer</button>
+      </div>
       <canvas id="preview" width={800} height={600} />
     </>
   );
