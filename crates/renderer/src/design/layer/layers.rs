@@ -2,7 +2,7 @@ use serde::Serialize;
 use slotmap::{DefaultKey, Key, KeyData, SlotMap};
 use wasm_bindgen::JsValue;
 
-use crate::design::layer::layer::{Layer, LayerListResponse};
+use crate::design::layer::layer::{DraftLayer, Layer, LayerListResponse};
 
 #[derive(Serialize, Clone)]
 pub struct Layers {
@@ -18,8 +18,8 @@ impl Layers {
         }
     }
 
-    pub fn add_layer(&mut self, layer: Layer) {
-        self.layers.insert(layer);
+    pub fn add_layer(&mut self, layer: DraftLayer) {
+        self.layers.insert(layer.into());
     }
 
     pub fn get_layers(&self) -> Option<JsValue> {

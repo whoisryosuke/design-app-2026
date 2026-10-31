@@ -34,6 +34,12 @@ function App() {
     if (wasmLoaded && !rendererLoaded.current) startRenderer();
   }, [wasmLoaded]);
 
+  // const dispatch = (command: DesignCommand) => {
+  //   if (!renderer.current) return;
+
+  //   renderer.current.dispatch();
+  // };
+
   return (
     <>
       <canvas id="preview" width={800} height={600} />

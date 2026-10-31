@@ -23,3 +23,11 @@ extern "C" {
     #[wasm_bindgen(js_name = requestAnimationFrame)]
     fn request_animation_frame(f: &Closure<dyn FnMut(f64)>);
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn force_ts_generation() {
+        assert!(true);
+    }
+}

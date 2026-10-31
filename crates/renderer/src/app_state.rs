@@ -7,7 +7,10 @@ use vello_gpu::{
 };
 use wasm_bindgen::JsValue;
 
-use crate::design::layer::{layer::Layer, layers::Layers};
+use crate::design::layer::{
+    layer::{DraftLayer, Layer},
+    layers::Layers,
+};
 
 #[derive(Serialize, Clone)]
 pub struct AppState {
@@ -31,7 +34,7 @@ impl AppState {
         self.height = height;
     }
 
-    pub fn add_layer(&mut self, layer: Layer) {
+    pub fn add_layer(&mut self, layer: DraftLayer) {
         self.layers.add_layer(layer);
     }
 
