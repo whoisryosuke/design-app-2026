@@ -24,43 +24,43 @@
     "./panda/*": "./dist/panda/*",
     "./css": {
       "types": "./dist/css/index.d.ts",
-      "default": "./dist/css/index.mjs"
+      "default": "./dist/css/index.js"
     },
     "./css/*": {
       "types": "./dist/css/*.d.ts",
-      "default": "./dist/css/*.mjs"
+      "default": "./dist/css/*.js"
     },
     "./recipes": {
       "types": "./dist/recipes/index.d.ts",
-      "default": "./dist/recipes/index.mjs"
+      "default": "./dist/recipes/index.js"
     },
     "./recipes/*": {
       "types": "./dist/recipes/*.d.ts",
-      "default": "./dist/recipes/*.mjs"
+      "default": "./dist/recipes/*.js"
     },
     "./patterns": {
       "types": "./dist/patterns/index.d.ts",
-      "default": "./dist/patterns/index.mjs"
+      "default": "./dist/patterns/index.js"
     },
     "./patterns/*": {
       "types": "./dist/patterns/*.d.ts",
-      "default": "./dist/patterns/*.mjs"
+      "default": "./dist/patterns/*.js"
     },
     "./jsx": {
       "types": "./dist/jsx/index.d.ts",
-      "default": "./dist/jsx/index.mjs"
+      "default": "./dist/jsx/index.js"
     },
     "./jsx/*": {
       "types": "./dist/jsx/*.d.ts",
-      "default": "./dist/jsx/*.mjs"
+      "default": "./dist/jsx/*.js"
     },
     "./tokens": {
       "types": "./dist/tokens/index.d.ts",
-      "default": "./dist/tokens/index.mjs"
+      "default": "./dist/tokens/index.js"
     },
     "./helpers": {
       "types": "./dist/helpers.d.ts",
-      "default": "./dist/helpers.mjs"
+      "default": "./dist/helpers.js"
     },
     "./types": {
       "types": "./dist/types/index.d.ts"
