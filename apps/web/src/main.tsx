@@ -7,7 +7,7 @@ import { AppWrapper } from "./components/AppWrapper.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AppWrapper>
+    <AppWrapper theme="dark">
       <App />
     </AppWrapper>
   </StrictMode>,

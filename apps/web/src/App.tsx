@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import "./App.css";
 import init, { DesignRenderer } from "design-app-renderer";
-import type { DesignCommand, DraftLayer } from "design-app-renderer-types";
+import type { DesignCommand } from "design-app-renderer-types";
 import { useAtom } from "jotai";
 import { wasmLoadedAtom } from "./store/app";
 

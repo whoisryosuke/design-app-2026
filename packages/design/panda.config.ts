@@ -2,7 +2,7 @@ import { defineConfig } from "@pandacss/dev";
 import oatMilkPreset from "./src/preset";
 
 export default defineConfig({
-  presets: [oatMilkPreset],
+  presets: ["@pandacss/preset-base", oatMilkPreset],
 
   // Whether to use css reset
   preflight: true,

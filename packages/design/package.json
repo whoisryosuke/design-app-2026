@@ -14,6 +14,7 @@
   "license": "MIT",
   "devDependencies": {
     "@pandacss/dev": "^2.4.0",
+    "@pandacss/preset-base": "2.4.0",
     "@types/react": "^19.2.7",
     "react": "^19.0.0"
   },
