@@ -2,12 +2,12 @@
 //!
 //! Creates a canvas, builds a simple scene, and renders it once.
 
-#![cfg(target_arch = "wasm32")]
-
 use wasm_bindgen::prelude::*;
 
+#[cfg(target_arch = "wasm32")]
 mod app_state;
 mod design;
+#[cfg(target_arch = "wasm32")]
 mod renderer;
 
 /// This runs automatically when WASM is initialized.
