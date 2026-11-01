@@ -24,6 +24,8 @@ export const AppWrapper = ({
         width="100%"
         minHeight="100%"
         maxHeight="100%"
+        position="absolute"
+        inset={0}
       >
         {children}
       </Stack>
