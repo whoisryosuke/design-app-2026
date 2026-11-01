@@ -5,6 +5,7 @@ import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/700.css";
 import { Stack } from "../../styled-system/jsx";
 import { css, cx } from "../../styled-system/css";
+import TopNavigation from "./features/TopNavigation/TopNavigation";
 
 export type AppWrapperProps = {
   theme?: "light" | "dark";
@@ -27,6 +28,7 @@ export const AppWrapper = ({
         position="absolute"
         inset={0}
       >
+        <TopNavigation />
         {children}
       </Stack>
     </div>
