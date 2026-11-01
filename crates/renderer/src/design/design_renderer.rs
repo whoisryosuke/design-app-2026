@@ -40,18 +40,22 @@ impl DesignRenderer {
 
     /// Handle commands from frontend (e.g. create layer)
     #[wasm_bindgen]
-    pub fn dispatch(&mut self, cmd_js: JsValue) -> Result<(), JsValue> {
+    pub fn dispatch(&mut self, cmd_js: JsValue) -> Result<JsValue, JsError> {
         // Convert JS object directly to Rust Enum
         let cmd = serde_wasm_bindgen::from_value::<DesignCommand>(cmd_js)
-            .map_err(|_| JsValue::from_str("Not a proper command. Maybe mispelled?"))?;
+            .map_err(|_| JsError::new("Not a proper command. Maybe mispelled?"))?;
         match cmd {
             DesignCommand::AddLayer { layer } => {
                 self.state.borrow_mut().add_layer(layer);
-                Ok(())
+                Ok(JsValue::from_bool(true))
             }
             DesignCommand::SelectLayer { layer_id } => {
                 self.state.borrow_mut().select_layer(layer_id);
-                Ok(())
+                Ok(JsValue::from_bool(true))
+            }
+            DesignCommand::FetchLayersByParent { parent_id } => {
+                let response = self.state.borrow_mut().fetch_layers_by_parent(parent_id);
+                response
             }
         }
     }

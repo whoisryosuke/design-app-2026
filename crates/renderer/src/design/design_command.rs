@@ -8,4 +8,5 @@ use crate::design::layer::layer::DraftLayer;
 pub enum DesignCommand {
     AddLayer { layer: DraftLayer },
     SelectLayer { layer_id: u64 },
+    FetchLayersByParent { parent_id: Option<u64> },
 }

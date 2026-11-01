@@ -5,7 +5,7 @@ use vello_gpu::{
     color::palette::css,
     kurbo::{Affine, Circle, Rect, RoundedRect, Shape, Stroke},
 };
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{JsError, JsValue};
 
 use crate::design::layer::{
     layer::{DraftLayer, Layer},
@@ -40,6 +40,10 @@ impl AppState {
 
     pub fn get_layers(&self) -> Option<JsValue> {
         self.layers.get_layer_list()
+    }
+
+    pub fn fetch_layers_by_parent(&self, parent_id: Option<u64>) -> Result<JsValue, JsError> {
+        self.layers.fetch_layers_by_parent(parent_id)
     }
 
     pub fn select_layer(&mut self, layer_key: u64) {
