@@ -2,7 +2,9 @@
   "name": "design-app-renderer",
   "version": "1.0.0",
   "description": "",
-  "scripts": {},
+  "scripts": {
+    "build": "node scripts/build-wasm.js"
+  },
   "keywords": [],
   "author": "whoisryosuke",
   "license": "MIT",
