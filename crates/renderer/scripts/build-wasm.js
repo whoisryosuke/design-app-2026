@@ -5,8 +5,12 @@ const { styleText } = require("node:util");
 const packageDir = path.resolve(__dirname, "../../../");
 
 const commands = [
+  // Build Rust code
   "cargo build -p renderer --target wasm32-unknown-unknown",
+  // Compile to WASM binary + JS glue
   "wasm-bindgen target/wasm32-unknown-unknown/debug/renderer.wasm --target web --out-dir crates/renderer/pkg",
+  // Generate TS bindings
+  "cargo test export_bindings",
 ];
 
 try {
