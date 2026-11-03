@@ -6,7 +6,10 @@ use wasm_bindgen::prelude::*;
 
 #[cfg(target_arch = "wasm32")]
 mod app_state;
+mod command_queue;
 mod design;
+#[cfg(target_arch = "wasm32")]
+mod engine;
 #[cfg(target_arch = "wasm32")]
 mod renderer;
 

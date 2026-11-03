@@ -20,12 +20,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(width: u16, height: u16) -> Self {
+    pub fn new(width: Option<u16>, height: Option<u16>) -> Self {
         let layers = Layers::new();
         Self {
             layers,
-            width,
-            height,
+            width: width.unwrap_or(0),
+            height: height.unwrap_or(0),
         }
     }
 
