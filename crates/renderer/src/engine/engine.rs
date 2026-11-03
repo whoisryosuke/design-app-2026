@@ -9,7 +9,9 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 struct DesignEngine {
     state: Rc<RefCell<AppState>>,
-    renderer: Option<DesignRenderer>,
+    /// The WebGPU/Vello renderer for design documents.
+    /// We use `RefCell` here to prevent issues with async fns.
+    renderer: RefCell<Option<DesignRenderer>>,
     queue: Rc<RefCell<CommandQueue>>,
 }
 
@@ -22,7 +24,7 @@ impl DesignEngine {
 
         Ok(DesignEngine {
             state: Rc::new(RefCell::new(state)),
-            renderer: None,
+            renderer: RefCell::new(None),
             queue: Rc::new(RefCell::new(queue)),
         })
     }
@@ -58,22 +60,20 @@ impl DesignEngine {
     }
 
     #[wasm_bindgen]
-    pub async fn create_render(&mut self, canvas_id: &str) -> Result<JsValue, JsError> {
-        let renderer_result = DesignRenderer::create(canvas_id).await;
+    pub async fn create_render(&self, canvas_id: &str) -> Result<JsValue, JsError> {
+        let renderer = DesignRenderer::create(canvas_id)
+            .await
+            .map_err(|error_msg| JsError::new(&error_msg.to_string()))?;
 
-        match renderer_result {
-            Ok(renderer) => {
-                self.renderer = Some(renderer);
-                Ok(JsValue::from_bool(true))
-            }
-            Err(error_msg) => Err(JsError::new(&error_msg.to_string())),
-        }
+        *self.renderer.borrow_mut() = Some(renderer);
+        Ok(JsValue::from_bool(true))
     }
 
     #[wasm_bindgen]
     pub fn start_renderer(&mut self) -> Result<JsValue, JsError> {
-        match self.renderer {
-            Some(ref mut renderer) => {
+        let mut renderer_result = self.renderer.borrow_mut();
+        match renderer_result.as_mut() {
+            Some(renderer) => {
                 renderer.run(self.state.clone(), self.queue.clone());
                 Ok(JsValue::from_bool(true))
             }
@@ -85,8 +85,9 @@ impl DesignEngine {
 
     #[wasm_bindgen]
     pub fn stop_renderer(&mut self) -> Result<JsValue, JsError> {
-        match self.renderer {
-            Some(ref mut renderer) => {
+        let mut renderer_result = self.renderer.borrow_mut();
+        match renderer_result.as_mut() {
+            Some(renderer) => {
                 renderer.stop();
                 Ok(JsValue::from_bool(true))
             }
