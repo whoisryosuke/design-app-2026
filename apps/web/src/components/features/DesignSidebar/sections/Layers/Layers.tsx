@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { Stack } from "../../../../../../styled-system/jsx";
-import {
-  designEngineAtom,
-  dispatchCommandToRenderer,
-} from "../../../../../store/renderer";
+import { designEngineAtom } from "../../../../../store/renderer";
 import { useAtomValue } from "jotai";
 
 type Props = {};
@@ -14,7 +11,7 @@ const Layers = (props: Props) => {
 
   useEffect(() => {
     if (!renderer) return;
-    const newLayers = dispatchCommandToRenderer({
+    const newLayers = renderer.dispatch({
       FetchLayersByParent: {
         parent_id: null,
       },
