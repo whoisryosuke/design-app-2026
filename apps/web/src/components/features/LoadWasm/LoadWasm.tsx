@@ -1,18 +1,19 @@
 import React, { useEffect } from "react";
 import init from "design-app-renderer";
 import { useAtom } from "jotai";
-import { wasmLoadedAtom } from "../../../store/app";
+import { getDesignEngine } from "../../../services/load-wasm";
+import { designEngineAtom } from "../../../store/renderer";
 
 type Props = {};
 
 const LoadWasm = (props: Props) => {
-  const [wasmLoaded, setWasmLoaded] = useAtom(wasmLoadedAtom);
+  const [wasmLoaded, setDesignEngine] = useAtom(designEngineAtom);
 
   // Handle initializing WASM + Renderer
   useEffect(() => {
     async function runWasm() {
-      await init();
-      setWasmLoaded(true);
+      const designEngine = await getDesignEngine();
+      setDesignEngine(designEngine);
       console.log("✅ Renderer WASM loaded");
     }
 

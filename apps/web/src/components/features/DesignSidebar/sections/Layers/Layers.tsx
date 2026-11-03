@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import { Stack } from "../../../../../../styled-system/jsx";
 import {
-  designRendererAtom,
+  designEngineAtom,
   dispatchCommandToRenderer,
 } from "../../../../../store/renderer";
 import { useAtomValue } from "jotai";
-import { wasmLoadedAtom } from "../../../../../store/app";
 
 type Props = {};
 
 const Layers = (props: Props) => {
   const [layers, setLayers] = useState([]);
-  const renderer = useAtomValue(designRendererAtom);
+  const renderer = useAtomValue(designEngineAtom);
 
   useEffect(() => {
     if (!renderer) return;
