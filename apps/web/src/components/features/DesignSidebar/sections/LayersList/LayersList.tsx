@@ -5,7 +5,7 @@ import { useAtomValue } from "jotai";
 
 type Props = {};
 
-const Layers = (props: Props) => {
+const LayersList = (props: Props) => {
   const [layers, setLayers] = useState([]);
   const renderer = useAtomValue(designEngineAtom);
 
@@ -28,4 +28,4 @@ const Layers = (props: Props) => {
   );
 };
 
-export default Layers;
+export default LayersList;
