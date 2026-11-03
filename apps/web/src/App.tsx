@@ -1,7 +1,12 @@
+import { useAtomValue } from "jotai";
 import "./App.css";
+import LoadWasm from "./components/features/LoadWasm/LoadWasm";
 import DesignScreen from "./screens/Design/DesignScreen";
+import { wasmLoadedAtom } from "./store/app";
 
 function App() {
+  const wasmLoaded = useAtomValue(wasmLoadedAtom);
+
   // const handleCreateLayer = () => {
   //   const width = Math.round(Math.random() * 420);
   //   const height = Math.round(Math.random() * 420);
@@ -22,7 +27,12 @@ function App() {
   //   });
   // };
 
-  return <DesignScreen />;
+  return (
+    <>
+      {wasmLoaded && <DesignScreen />}
+      <LoadWasm />
+    </>
+  );
 }
 
 export default App;

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import init, { DesignRenderer } from "design-app-renderer";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { wasmLoadedAtom } from "../../../store/app";
 import { designRendererAtom } from "../../../store/renderer";
 
@@ -15,7 +15,7 @@ async function initializeRenderer() {
 type Props = {};
 
 const DesignCanvas = (props: Props) => {
-  const [wasmLoaded, setWasmLoaded] = useAtom(wasmLoadedAtom);
+  const wasmLoaded = useAtomValue(wasmLoadedAtom);
   const rendererLoaded = useRef(false);
   const setDesignRenderer = useSetAtom(designRendererAtom);
 
@@ -26,13 +26,6 @@ const DesignCanvas = (props: Props) => {
       setDesignRenderer(newRenderer);
       rendererLoaded.current = true;
     }
-    async function runWasm() {
-      await init();
-      setWasmLoaded(true);
-    }
-
-    // WASM isn't loaded? Initialize it
-    if (!wasmLoaded) runWasm();
     // Loaded and haven't run renderer yet? Initialize it and run render loop
     if (wasmLoaded && !rendererLoaded.current) startRenderer();
   }, [wasmLoaded]);
