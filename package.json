@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build:wasm": "pnpm --filter design-app-renderer build",
+    "generate:wasm-types": "pnpm --filter design-app-renderer-types generate:index",
     "start:web": "pnpm --filter design-app-web dev"
   },
   "keywords": [],

@@ -11,6 +11,8 @@ const commands = [
   "wasm-bindgen target/wasm32-unknown-unknown/debug/renderer.wasm --target web --out-dir crates/renderer/pkg",
   // Generate TS bindings
   "cargo test export_bindings",
+  // Add any new bindings to the type pkg's `index.ts`
+  "pnpm generate:wasm-types",
 ];
 
 try {
