@@ -1,6 +1,5 @@
 use serde::Serialize;
 use slotmap::{DefaultKey, Key, KeyData, SlotMap};
-use wasm_bindgen::{JsError, JsValue};
 
 use crate::design::layer::{
     layer::{DraftLayer, Layer, LayerListResponse},
@@ -25,7 +24,7 @@ impl Layers {
         self.layers.insert(layer.into());
     }
 
-    pub fn get_layer_list(&self) -> Option<JsValue> {
+    pub fn get_layer_list(&self) -> Vec<LayerListResponse> {
         let list: Vec<LayerListResponse> = self
             .layers
             .iter()
@@ -35,7 +34,7 @@ impl Layers {
                 visible: v.visible,
             })
             .collect();
-        serde_wasm_bindgen::to_value(&list).ok()
+        list
     }
 
     pub fn select_layer(&mut self, layer_key: u64) {
@@ -54,13 +53,7 @@ impl Layers {
         layer_batch
     }
 
-    /// Provides a list of layers filtered by parent ID for frontend.
-    /// Same as `get_layers_by_parent` - but this result is WASM JSON payload,
-    /// and expects u64 parent (which is how frontend stores it).
-    pub fn fetch_layers_by_parent(&self, parent: Option<u64>) -> Result<JsValue, JsError> {
-        let parent_key = parent.map(|raw_key| convert_u64_to_default_key(raw_key));
-        let layers = self.get_layers_by_parent(parent_key);
-
+    pub fn create_layers_response(layers: Vec<(DefaultKey, &Layer)>) -> Vec<LayerListResponse> {
         let layer_response: Vec<LayerListResponse> = layers
             .iter()
             .map(|(k, v)| LayerListResponse {
@@ -69,6 +62,6 @@ impl Layers {
                 visible: v.visible,
             })
             .collect();
-        serde_wasm_bindgen::to_value(&layer_response).map_err(|err| JsError::new(&err.to_string()))
+        layer_response
     }
 }

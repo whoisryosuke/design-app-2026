@@ -40,7 +40,11 @@ impl DesignEngine {
             // Response commands
             // These commands expect an immediate response and only read state
             DesignCommand::FetchLayersByParent { parent_id } => {
-                let response = self.state.borrow_mut().fetch_layers_by_parent(parent_id);
+                let response = self
+                    .state
+                    .borrow_mut()
+                    .layers_service
+                    .fetch_layers_by_parent(parent_id);
                 response
             }
 

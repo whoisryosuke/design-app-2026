@@ -28,8 +28,10 @@ impl CommandQueue {
 
         for command in commands {
             match command {
-                DesignCommand::AddLayer { layer } => app_state.add_layer(layer),
-                DesignCommand::SelectLayer { layer_id } => app_state.select_layer(layer_id),
+                DesignCommand::AddLayer { layer } => app_state.layers_service.add_layer(layer),
+                DesignCommand::SelectLayer { layer_id } => {
+                    app_state.layers_service.select_layer(layer_id)
+                }
                 // Assume it's a response command
                 // @TODO: Would be nice to have a way to distinguish in types.
                 _ => {}

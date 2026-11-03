@@ -10,20 +10,21 @@ use wasm_bindgen::{JsError, JsValue};
 use crate::design::layer::{
     layer::{DraftLayer, Layer},
     layers::Layers,
+    layers_service::LayersService,
 };
 
 #[derive(Serialize, Clone)]
 pub struct AppState {
-    layers: Layers,
+    pub layers_service: LayersService,
     width: u16,
     height: u16,
 }
 
 impl AppState {
     pub fn new(width: Option<u16>, height: Option<u16>) -> Self {
-        let layers = Layers::new();
+        let layers_service = LayersService::new();
         Self {
-            layers,
+            layers_service,
             width: width.unwrap_or(0),
             height: height.unwrap_or(0),
         }
@@ -32,22 +33,6 @@ impl AppState {
     pub fn set_width_and_height(&mut self, width: u16, height: u16) {
         self.width = width;
         self.height = height;
-    }
-
-    pub fn add_layer(&mut self, layer: DraftLayer) {
-        self.layers.add_layer(layer);
-    }
-
-    pub fn get_layers(&self) -> Option<JsValue> {
-        self.layers.get_layer_list()
-    }
-
-    pub fn fetch_layers_by_parent(&self, parent_id: Option<u64>) -> Result<JsValue, JsError> {
-        self.layers.fetch_layers_by_parent(parent_id)
-    }
-
-    pub fn select_layer(&mut self, layer_key: u64) {
-        self.layers.select_layer(layer_key);
     }
 
     /// Build a simple scene: background, a circle, and an outlined rounded rect.
@@ -79,7 +64,7 @@ impl AppState {
         //     .to_path(0.1),
         // );
 
-        let layers = self.layers.get_layers_by_parent(None);
+        let layers = self.layers_service.layers.get_layers_by_parent(None);
 
         for (_, layer) in layers {
             scene.set_paint(css::WHITE);
