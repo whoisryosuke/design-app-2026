@@ -28,7 +28,7 @@ try {
     styleText(["greenBright", "bold", "bgGreen"], "✅ WASM Build Successful!"),
   );
 } catch (error) {
-  console.error(styleText(["redBright", "bold", "bRed"], "❌ Build failed."));
+  console.error(styleText(["redBright", "bold", "bgRed"], "❌ Build failed."));
   console.log(error);
   process.exit(1);
 }
