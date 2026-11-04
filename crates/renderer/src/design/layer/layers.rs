@@ -42,6 +42,14 @@ impl Layers {
         self.selected_layer = slot_map_key;
     }
 
+    pub fn get_selected_layer_id(&self) -> DefaultKey {
+        self.selected_layer
+    }
+
+    pub fn get_selected_layer(&self) -> Option<&Layer> {
+        self.layers.get(self.selected_layer)
+    }
+
     /// Provides a list of layers filtered by parent ID for backend.
     /// For top level layers, provide `None` as `parent` parameter.
     pub fn get_layers_by_parent(&self, parent: Option<DefaultKey>) -> Vec<(DefaultKey, &Layer)> {

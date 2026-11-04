@@ -40,7 +40,7 @@ impl AppState {
         let mut scene = Scene::new(self.width, self.height);
 
         // Background
-        scene.set_paint(css::BLUE);
+        scene.set_paint(css::DIM_GRAY);
         scene.fill_rect(&Rect::new(0.0, 0.0, self.width as f64, self.height as f64));
 
         // Filled circle
@@ -67,12 +67,24 @@ impl AppState {
         let layers = self.layers_service.layers.get_layers_by_parent(None);
 
         for (_, layer) in layers {
-            scene.set_paint(css::WHITE);
+            scene.set_paint(css::LIGHT_CYAN);
             scene.fill_rect(&Rect {
                 x0: layer.position.0,
                 y0: layer.position.0,
                 x1: layer.width,
                 y1: layer.height,
+            });
+        }
+
+        // Draw selection
+        if let Some(selected_layer) = self.layers_service.layers.get_selected_layer() {
+            scene.set_stroke(Stroke::new(3.0));
+            scene.set_paint(css::BLUE);
+            scene.stroke_rect(&Rect {
+                x0: selected_layer.position.0,
+                y0: selected_layer.position.0,
+                x1: selected_layer.width,
+                y1: selected_layer.height,
             });
         }
 
