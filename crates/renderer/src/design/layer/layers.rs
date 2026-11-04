@@ -1,5 +1,6 @@
 use serde::Serialize;
 use slotmap::{DefaultKey, Key, KeyData, SlotMap};
+use vello_gpu::kurbo::{Point, Rect};
 
 use crate::design::layer::{
     layer::{DraftLayer, Layer, LayerListResponse},
@@ -37,9 +38,8 @@ impl Layers {
         list
     }
 
-    pub fn select_layer(&mut self, layer_key: u64) {
-        let slot_map_key = convert_u64_to_default_key(layer_key);
-        self.selected_layer = slot_map_key;
+    pub fn select_layer(&mut self, layer_key: DefaultKey) {
+        self.selected_layer = layer_key;
     }
 
     pub fn get_selected_layer_id(&self) -> DefaultKey {
@@ -71,5 +71,39 @@ impl Layers {
             })
             .collect();
         layer_response
+    }
+
+    pub fn find_layer_by_position(&self, x: f64, y: f64) -> Option<(DefaultKey, Layer)> {
+        self.layers
+            .iter()
+            .find_map(|(key, layer)| self.hit_test(&key, &layer, x, y))
+
+        // .values()
+        // .find_map(|layer| self.hit_test(&layer, x, y))
+    }
+
+    fn hit_test(
+        &self,
+        key: &DefaultKey,
+        layer: &Layer,
+        x: f64,
+        y: f64,
+    ) -> Option<(DefaultKey, Layer)> {
+        let local = Point::new(x - layer.position.0, y - layer.position.1);
+
+        // Children are drawn on top of their parent, so check them first
+        // if let Some(hit) = self.hit_test_children(key, local) {
+        //     return Some(hit);
+        // }
+
+        let bounds = Rect::new(
+            layer.position.0,
+            layer.position.1,
+            layer.width,
+            layer.height,
+        );
+        bounds
+            .contains(local)
+            .then_some((key.clone(), layer.clone()))
     }
 }

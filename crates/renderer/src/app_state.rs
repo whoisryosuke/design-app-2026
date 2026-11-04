@@ -113,6 +113,7 @@ impl AppState {
         self.mouse_state.last_position = (x, y);
 
         // Check if any layers can be selected
+        self.find_layer_by_position(x, y);
     }
 
     pub fn handle_mouse_up(&mut self) {
@@ -123,6 +124,12 @@ impl AppState {
     pub fn handle_mouse_move(&mut self, canvas: &HtmlCanvasElement, x: f64, y: f64) {
         let (x, y) = convert_mouse_to_canvas_position(&canvas, x, y);
         self.mouse_state.last_position = (x, y);
+    }
+
+    fn find_layer_by_position(&mut self, x: f64, y: f64) {
+        if let Some((key, _)) = self.layers_service.layers.find_layer_by_position(x, y) {
+            self.layers_service.layers.select_layer(key);
+        }
     }
 }
 

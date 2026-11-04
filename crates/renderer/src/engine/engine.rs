@@ -214,6 +214,7 @@ impl DesignEngine {
         Ok(())
     }
 
+    // @TODO: Combine into a "stop" function for whole renderer
     #[wasm_bindgen]
     pub fn stop_event_listeners(&self) {
         if let Ok(mut listeners) = self.listeners.try_borrow_mut() {

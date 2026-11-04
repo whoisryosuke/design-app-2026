@@ -34,6 +34,11 @@ impl LayersService {
         serde_wasm_bindgen::to_value(&list).ok()
     }
 
+    pub fn select_layer(&mut self, layer_key: u64) {
+        let slot_map_key = convert_u64_to_default_key(layer_key);
+        self.layers.select_layer(slot_map_key);
+    }
+
     /// Provides a list of layers filtered by parent ID for frontend.
     /// Same as `layers.get_layers_by_parent` - but this result is WASM JSON payload,
     /// and expects u64 parent (which is how frontend stores it).
@@ -44,9 +49,5 @@ impl LayersService {
         let layer_response = Layers::create_layers_response(layers);
 
         serde_wasm_bindgen::to_value(&layer_response).map_err(|err| JsError::new(&err.to_string()))
-    }
-
-    pub fn select_layer(&mut self, layer_key: u64) {
-        self.layers.select_layer(layer_key);
     }
 }
