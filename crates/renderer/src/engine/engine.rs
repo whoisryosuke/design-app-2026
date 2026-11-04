@@ -205,7 +205,7 @@ impl DesignEngine {
         {
             let app_state = self.state.clone();
 
-            let mouse_move_listener = EventListener::new(&window, "mousedown", move |_| {
+            let mouse_move_listener = EventListener::new(&window, "mouseup", move |_| {
                 app_state.borrow_mut().handle_mouse_up();
             });
             self.listeners.borrow_mut().push(mouse_move_listener);
