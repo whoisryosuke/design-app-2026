@@ -7,6 +7,7 @@ use vello_gpu::{
     peniko::Color,
 };
 use wasm_bindgen::{JsError, JsValue};
+use web_sys::{DomRect, HtmlCanvasElement};
 
 use crate::design::layer::{
     layer::{DraftLayer, Layer},
@@ -14,11 +15,18 @@ use crate::design::layer::{
     layers_service::LayersService,
 };
 
+#[derive(Default, Serialize, Clone)]
+pub struct MouseState {
+    pub clicked: bool,
+    pub last_position: (f64, f64),
+}
+
 #[derive(Serialize, Clone)]
 pub struct AppState {
     pub layers_service: LayersService,
     width: u16,
     height: u16,
+    mouse_state: MouseState,
 }
 
 impl AppState {
@@ -28,6 +36,7 @@ impl AppState {
             layers_service,
             width: width.unwrap_or(0),
             height: height.unwrap_or(0),
+            mouse_state: MouseState::default(),
         }
     }
 
@@ -95,4 +104,37 @@ impl AppState {
     pub fn frame(&self, timestamp: f64) -> Scene {
         self.build_scene(timestamp)
     }
+
+    pub fn handle_mouse_down(&mut self, canvas: &HtmlCanvasElement, x: f64, y: f64) {
+        // Update mouse state
+        self.mouse_state.clicked = true;
+
+        let (x, y) = convert_mouse_to_canvas_position(&canvas, x, y);
+        self.mouse_state.last_position = (x, y);
+
+        // Check if any layers can be selected
+    }
+
+    pub fn handle_mouse_up(&mut self) {
+        self.mouse_state.clicked = false;
+        self.mouse_state.last_position = (0.0, 0.0);
+    }
+
+    pub fn handle_mouse_move(&mut self, canvas: &HtmlCanvasElement, x: f64, y: f64) {
+        let (x, y) = convert_mouse_to_canvas_position(&canvas, x, y);
+        self.mouse_state.last_position = (x, y);
+    }
+}
+
+fn convert_mouse_to_canvas_position(
+    canvas: &HtmlCanvasElement,
+    mouse_x: f64,
+    mouse_y: f64,
+) -> (f64, f64) {
+    let rect = canvas.get_bounding_client_rect();
+    let width = rect.width().max(1.0);
+    let height = rect.height().max(1.0);
+    let x = ((mouse_x - rect.left()) / width).clamp(0.0, 1.0);
+    let y = ((mouse_y - rect.top()) / height).clamp(0.0, 1.0);
+    (x * canvas.width() as f64, y * canvas.height() as f64)
 }

@@ -3,8 +3,10 @@ use crate::{
     command_queue::{command_queue::CommandQueue, design_command::DesignCommand},
     renderer::design_renderer::DesignRenderer,
 };
+use gloo_events::EventListener;
 use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::prelude::*;
+use web_sys::MouseEvent;
 
 #[wasm_bindgen]
 struct DesignEngine {
@@ -15,6 +17,8 @@ struct DesignEngine {
     queue: Rc<RefCell<CommandQueue>>,
     /// Numeric flag (aka "Monotonic token") used to discard stale renderer
     create_generation: RefCell<u64>,
+    // Event listeners (here to drop later)
+    listeners: RefCell<Vec<EventListener>>,
 }
 
 #[wasm_bindgen]
@@ -29,6 +33,7 @@ impl DesignEngine {
             renderer: RefCell::new(None),
             queue: Rc::new(RefCell::new(queue)),
             create_generation: RefCell::new(0),
+            listeners: RefCell::new(Vec::new()),
         })
     }
 
@@ -115,6 +120,10 @@ impl DesignEngine {
         // Store renderer locally directly in mutable pointer
         // (avoids `&mut self` which causes race conditions with other methods).
         *self.renderer.borrow_mut() = Some(new_renderer);
+
+        // Attach event listeners to event targets (like checking window for "onmousemove")
+        self.create_event_listeners()?;
+
         Ok(JsValue::from_bool(true))
     }
 
@@ -140,5 +149,75 @@ impl DesignEngine {
         }
         // Always true since we handle cleanup during creation
         Ok(JsValue::from_bool(true))
+    }
+
+    /// Attaches event listeners to window and canvas for mouse events.
+    /// Listeners are stored so they can be dropped later which stops them (aka "detaches").
+    fn create_event_listeners(&self) -> Result<(), JsError> {
+        let window = web_sys::window().ok_or(JsError::new(""))?;
+        let canvas = self
+            .renderer
+            .borrow_mut()
+            .as_ref()
+            .ok_or(JsError::new("Renderer is not initialized"))?
+            .get_canvas()
+            .ok_or(JsError::new("Canvas could not be retrieved"))?;
+
+        // Mouse move
+        {
+            let app_state = self.state.clone();
+            let canvas = canvas.clone();
+
+            let mouse_move_listener = EventListener::new(&window, "mousemove", move |event| {
+                let Some(event) = event.dyn_ref::<MouseEvent>() else {
+                    return;
+                };
+                app_state.borrow_mut().handle_mouse_move(
+                    &canvas,
+                    event.client_x() as f64,
+                    event.client_y() as f64,
+                );
+            });
+            self.listeners.borrow_mut().push(mouse_move_listener);
+        }
+
+        // Mouse down
+        {
+            let app_state = self.state.clone();
+            let canvas_target = canvas.clone();
+            let canvas = canvas.clone();
+
+            let mouse_move_listener =
+                EventListener::new(&canvas_target, "mousedown", move |event| {
+                    let Some(event) = event.dyn_ref::<MouseEvent>() else {
+                        return;
+                    };
+                    app_state.borrow_mut().handle_mouse_down(
+                        &canvas,
+                        event.client_x() as f64,
+                        event.client_y() as f64,
+                    );
+                });
+            self.listeners.borrow_mut().push(mouse_move_listener);
+        }
+
+        // Mouse up
+        {
+            let app_state = self.state.clone();
+
+            let mouse_move_listener = EventListener::new(&window, "mousedown", move |_| {
+                app_state.borrow_mut().handle_mouse_up();
+            });
+            self.listeners.borrow_mut().push(mouse_move_listener);
+        }
+
+        Ok(())
+    }
+
+    #[wasm_bindgen]
+    pub fn stop_event_listeners(&self) {
+        if let Ok(mut listeners) = self.listeners.try_borrow_mut() {
+            listeners.clear();
+        }
     }
 }

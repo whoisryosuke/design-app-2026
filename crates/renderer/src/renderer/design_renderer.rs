@@ -44,6 +44,10 @@ impl DesignRenderer {
         Ok((canvas.width(), canvas.height()))
     }
 
+    pub fn get_canvas(&self) -> Option<HtmlCanvasElement> {
+        self.canvas.clone()
+    }
+
     /// Manually render. Not used since we have RAF run render process.
     async fn render(&mut self, scene: &Scene) -> Result<(), JsValue> {
         self.renderer_context.borrow_mut().render(scene);
