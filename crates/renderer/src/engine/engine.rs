@@ -70,30 +70,26 @@ impl DesignEngine {
     }
 
     #[wasm_bindgen]
-    pub fn start_renderer(&mut self) -> Result<JsValue, JsError> {
+    pub fn start_renderer(&self) -> Result<JsValue, JsError> {
         let mut renderer_result = self.renderer.borrow_mut();
         match renderer_result.as_mut() {
             Some(renderer) => {
                 renderer.run(self.state.clone(), self.queue.clone());
                 Ok(JsValue::from_bool(true))
             }
-            None => Err(JsError::new(
-                &"No renderer found, create one first".to_string(),
-            )),
+            None => Err(JsError::new("No renderer found, create one first")),
         }
     }
 
     #[wasm_bindgen]
-    pub fn stop_renderer(&mut self) -> Result<JsValue, JsError> {
+    pub fn stop_renderer(&self) -> Result<JsValue, JsError> {
         let mut renderer_result = self.renderer.borrow_mut();
         match renderer_result.as_mut() {
             Some(renderer) => {
                 renderer.stop();
                 Ok(JsValue::from_bool(true))
             }
-            None => Err(JsError::new(
-                &"No renderer found, create one first".to_string(),
-            )),
+            None => Err(JsError::new("No renderer found, create one first")),
         }
     }
 }
