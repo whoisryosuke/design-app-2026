@@ -99,8 +99,8 @@ impl Layers {
         let bounds = Rect::new(
             layer.position.0,
             layer.position.1,
-            layer.width,
-            layer.height,
+            layer.position.0 + layer.width,
+            layer.position.1 + layer.height,
         );
         bounds
             .contains(local)
