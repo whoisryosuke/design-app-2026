@@ -1,40 +1,77 @@
 import { useEffect, useRef } from "react";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { designEngineAtom } from "../../../store/renderer";
 
 const CANVAS_NAME = "preview";
 
-type Props = {};
-
-const DesignCanvas = (props: Props) => {
+const DesignCanvas = () => {
   const designEngine = useAtomValue(designEngineAtom);
-  const rendererLoaded = useRef(false);
+  // Generation ID for the current renderer in this "mount"
+  const creationIdRef = useRef(0);
 
-  // Handle initializing WASM + Renderer
   useEffect(() => {
-    async function startRenderer() {
-      const result = await designEngine?.create_render(CANVAS_NAME);
-      console.log("Renderer created with canvas", CANVAS_NAME, result);
-      rendererLoaded.current = true;
+    let cancelled = false;
+    const myId = ++creationIdRef.current;
+    let didCreate = false;
 
-      // Start render loop
-      designEngine?.start_renderer();
-      console.log("Render loop started");
+    // This handles creating the `DesignRenderer` inside `DesignEngine` using the provided canvas.
+    // To protect against this un-mounting + re-mounting quickly, we use a "generation" system
+    // (aka an index we increment as an "ID") to keep track of what renderer was created.
+    async function startRenderer() {
+      if (!designEngine) return;
+
+      try {
+        // Create renderer - this returns true if created successfully.
+        const created = await designEngine.create_render(CANVAS_NAME);
+
+        // Generation mis-match? Means newer render was created.
+        // @TODO: Might not be necessary here...
+        if (myId !== creationIdRef.current) return;
+
+        // Store creation flag locally in `useEffect` so un-mount callback can see it.
+        didCreate = created;
+
+        // Did we unmount? Stop the renderer if it was created.
+        // And immediately return - we can assume component will re-mount if needed.
+        if (cancelled) {
+          if (didCreate) {
+            try {
+              designEngine.stop_renderer();
+            } catch (e) {
+              console.error("Error stopping renderer", e);
+            }
+          }
+          return;
+        }
+
+        // Failed to create? Bail early because we can't start render loop.
+        if (!created) return;
+
+        // Start render loop
+        designEngine.start_renderer();
+        console.log("Render loop started");
+      } catch (e) {
+        console.error("Error creating renderer", e);
+      }
     }
-    // Loaded and haven't run renderer yet? Initialize it and run render loop
-    if (designEngine && !rendererLoaded.current) startRenderer();
+
+    if (designEngine) startRenderer();
 
     return () => {
-      // Stop render loop
-      try {
-        designEngine?.stop_renderer();
-      } catch (e) {
-        console.error("Error stopping renderer", e);
-      }
+      // Cancel the `async` promise that's possibly still running
+      cancelled = true;
 
-      // @TODO: Clear renderer resources
+      // Only stop if this mount actually owns the current renderer.
+      if (myId === creationIdRef.current && didCreate) {
+        try {
+          designEngine?.stop_renderer();
+        } catch (e) {
+          console.error("Error stopping renderer", e);
+        }
+      }
     };
   }, [designEngine]);
+
   return (
     <div>
       <canvas id={CANVAS_NAME} width={800} height={600} />

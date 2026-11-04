@@ -35,6 +35,15 @@ impl DesignRenderer {
         })
     }
 
+    pub fn get_canvas_size(&self) -> Result<(u32, u32), String> {
+        let canvas = self
+            .canvas
+            .as_ref()
+            .ok_or_else(|| "No canvas, recreate this struct".to_string())?;
+
+        Ok((canvas.width(), canvas.height()))
+    }
+
     /// Manually render. Not used since we have RAF run render process.
     async fn render(&mut self, scene: &Scene) -> Result<(), JsValue> {
         self.renderer_context.borrow_mut().render(scene);
@@ -44,7 +53,9 @@ impl DesignRenderer {
 
     /// Stops the render loop by dropping the handle.
     pub fn stop(&mut self) {
-        self.loop_handle = None;
+        if let Some(handle) = self.loop_handle.take() {
+            *handle.borrow_mut() = None;
+        }
     }
 
     /// Start the render loop using RAF.

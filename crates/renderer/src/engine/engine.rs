@@ -13,6 +13,8 @@ struct DesignEngine {
     /// We use `RefCell` here to prevent issues with async fns.
     renderer: RefCell<Option<DesignRenderer>>,
     queue: Rc<RefCell<CommandQueue>>,
+    /// Numeric flag (aka "Monotonic token") used to discard stale renderer
+    create_generation: RefCell<u64>,
 }
 
 #[wasm_bindgen]
@@ -26,6 +28,7 @@ impl DesignEngine {
             state: Rc::new(RefCell::new(state)),
             renderer: RefCell::new(None),
             queue: Rc::new(RefCell::new(queue)),
+            create_generation: RefCell::new(0),
         })
     }
 
@@ -59,16 +62,54 @@ impl DesignEngine {
         }
     }
 
+    /// Creates renderer (`DesignRenderer`) using provided canvas ID.
+    /// Also handles clearing old renderer if this method run multiple times (e.g. React StrictMode).
+    /// Keep in mind we only allow for 1 renderer and 1 canvas at a time for now.
     #[wasm_bindgen]
     pub async fn create_render(&self, canvas_id: &str) -> Result<JsValue, JsError> {
-        let renderer = DesignRenderer::create(canvas_id)
+        // Stop and drop any renderer that is currently attached before
+        // creating a new one. This prevents two WebGPU devices from
+        // targeting the same canvas (StrictMode / remount).
+        {
+            let mut renderer = self.renderer.borrow_mut();
+            if let Some(existing) = renderer.as_mut() {
+                existing.stop();
+            }
+            *renderer = None;
+        }
+
+        // Claim a generation token for this creation attempt.
+        let generation = {
+            let mut generation_index = self.create_generation.borrow_mut();
+            *generation_index += 1;
+            *generation_index
+        };
+
+        let mut new_renderer = DesignRenderer::create(canvas_id)
             .await
             .map_err(|error_msg| JsError::new(&error_msg.to_string()))?;
 
-        *self.renderer.borrow_mut() = Some(renderer);
+        // If a newer creation has started in the meantime, discard this one
+        // so it cannot overwrite the newer renderer.
+        if *self.create_generation.borrow() != generation {
+            new_renderer.stop();
+            return Ok(JsValue::from_bool(false));
+        }
+
+        // Get the canvas size to update the app state.
+        if let Ok((width, height)) = new_renderer.get_canvas_size() {
+            self.state
+                .borrow_mut()
+                .set_width_and_height(width as u16, height as u16);
+        };
+
+        // Store renderer locally directly in mutable pointer
+        // (avoids `&mut self` which causes race conditions with other methods).
+        *self.renderer.borrow_mut() = Some(new_renderer);
         Ok(JsValue::from_bool(true))
     }
 
+    /// Starts render loop
     #[wasm_bindgen]
     pub fn start_renderer(&self) -> Result<JsValue, JsError> {
         let mut renderer_result = self.renderer.borrow_mut();
@@ -81,15 +122,14 @@ impl DesignEngine {
         }
     }
 
+    /// Stops render loop
     #[wasm_bindgen]
     pub fn stop_renderer(&self) -> Result<JsValue, JsError> {
         let mut renderer_result = self.renderer.borrow_mut();
-        match renderer_result.as_mut() {
-            Some(renderer) => {
-                renderer.stop();
-                Ok(JsValue::from_bool(true))
-            }
-            None => Err(JsError::new("No renderer found, create one first")),
+        if let Some(renderer) = renderer_result.as_mut() {
+            renderer.stop();
         }
+        // Always true since we handle cleanup during creation
+        Ok(JsValue::from_bool(true))
     }
 }
