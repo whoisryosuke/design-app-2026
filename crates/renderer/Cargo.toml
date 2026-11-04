@@ -17,6 +17,7 @@ wasm-bindgen = "=0.2.129"
 wasm-bindgen-futures = "0.4.79"
 web-sys = {version = "0.3.106", features= [
     "AddEventListenerOptions",
+    "console",
     "DomRect", 
     "Window", 
     "Document", 
@@ -25,6 +26,10 @@ web-sys = {version = "0.3.106", features= [
     "MouseEvent",
     "WheelEvent",
     "KeyboardEvent",
+    "ResizeObserver",
+    "ResizeObserverEntry",
+    "ResizeObserverSize",
+    "DomRectReadOnly"
 ] }
 wgpu = "30.0.1"
 
