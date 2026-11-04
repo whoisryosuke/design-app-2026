@@ -1,7 +1,7 @@
 use vello_common::fearless_simd::Level;
 use vello_gpu::{RenderSettings, RenderSize, RenderTargetConfig, Renderer, Scene};
 use web_sys::HtmlCanvasElement;
-use wgpu::CurrentSurfaceTexture;
+use wgpu::{CurrentSurfaceTexture, TextureFormat};
 
 /// WebGPU and Vello rendering context
 pub struct RendererContext {
@@ -11,6 +11,7 @@ pub struct RendererContext {
     renderer: vello_gpu::Renderer,
     resources: vello_gpu::Resources,
     depth_texture_view: wgpu::TextureView,
+    surface_format: TextureFormat,
     pub render_size: RenderSize,
 }
 
@@ -78,8 +79,8 @@ impl RendererContext {
 
         // Setup Vello GPU
         let render_size = RenderSize {
-            width: width.try_into().unwrap(),
-            height: height.try_into().unwrap(),
+            width: width.try_into().unwrap_or(1),
+            height: height.try_into().unwrap_or(1),
         };
         let mut settings = RenderSettings::default();
         settings.level = Level::try_detect().unwrap_or(Level::baseline());
@@ -102,6 +103,7 @@ impl RendererContext {
             resources,
             depth_texture_view,
             render_size,
+            surface_format,
         }
     }
 
@@ -120,22 +122,42 @@ impl RendererContext {
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
-        self.renderer
-            .render(
-                scene,
-                &mut self.resources,
-                &self.device,
-                &self.queue,
-                &mut encoder,
-                &self.render_size,
-                &surface_view,
-                Some(&self.depth_texture_view),
-                &vello_gpu::TextureBindings::new(),
-                vello_gpu::TargetInit::Clear(vello_gpu::ClearSettings::default()),
-            )
-            .unwrap();
+        // @TODO: Handle renderer errors (`RenderError`)
+        self.renderer.render(
+            scene,
+            &mut self.resources,
+            &self.device,
+            &self.queue,
+            &mut encoder,
+            &self.render_size,
+            &surface_view,
+            Some(&self.depth_texture_view),
+            &vello_gpu::TextureBindings::new(),
+            vello_gpu::TargetInit::Clear(vello_gpu::ClearSettings::default()),
+        );
 
         self.queue.submit([encoder.finish()]);
         self.queue.present(surface_texture);
+    }
+
+    pub fn resize(&mut self, width: u32, height: u32) {
+        let surface_config = &wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: self.surface_format,
+            width,
+            height,
+            present_mode: wgpu::PresentMode::Fifo,
+            color_space: wgpu::SurfaceColorSpace::Auto,
+            alpha_mode: wgpu::CompositeAlphaMode::Opaque,
+            desired_maximum_frame_latency: 2,
+            view_formats: vec![],
+        };
+        self.surface.configure(&self.device, surface_config);
+
+        let render_size = RenderSize {
+            width: width.try_into().unwrap_or(0),
+            height: height.try_into().unwrap_or(0),
+        };
+        self.depth_texture_view = Renderer::create_depth_texture_view(&self.device, &render_size);
     }
 }

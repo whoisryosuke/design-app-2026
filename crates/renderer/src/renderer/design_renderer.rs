@@ -54,6 +54,10 @@ impl DesignRenderer {
             .unwrap_or(1.0)
     }
 
+    pub fn resize(&mut self, width: u32, height: u32) {
+        self.renderer_context.borrow_mut().resize(width, height);
+    }
+
     /// Manually render. Not used since we have RAF run render process.
     async fn render(&mut self, scene: &Scene) -> Result<(), JsValue> {
         self.renderer_context.borrow_mut().render(scene);

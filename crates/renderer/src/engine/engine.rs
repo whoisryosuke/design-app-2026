@@ -2,23 +2,32 @@ use crate::{
     app_state::AppState,
     command_queue::{command_queue::CommandQueue, design_command::DesignCommand},
     renderer::design_renderer::DesignRenderer,
+    utils::wasm::get_canvas_element,
 };
 use gloo_events::EventListener;
 use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::prelude::*;
-use web_sys::MouseEvent;
+use web_sys::{
+    HtmlCanvasElement, MouseEvent, ResizeObserver, ResizeObserverEntry, console, js_sys,
+};
 
 #[wasm_bindgen]
 struct DesignEngine {
     state: Rc<RefCell<AppState>>,
     /// The WebGPU/Vello renderer for design documents.
     /// We use `RefCell` here to prevent issues with async fns.
-    renderer: RefCell<Option<DesignRenderer>>,
+    renderer: Rc<RefCell<Option<DesignRenderer>>>,
     queue: Rc<RefCell<CommandQueue>>,
     /// Numeric flag (aka "Monotonic token") used to discard stale renderer
     create_generation: RefCell<u64>,
     // Event listeners (here to drop later)
     listeners: RefCell<Vec<EventListener>>,
+    resize_observer: RefCell<
+        Option<(
+            web_sys::ResizeObserver,
+            wasm_bindgen::closure::Closure<dyn FnMut(js_sys::Array)>,
+        )>,
+    >,
 }
 
 #[wasm_bindgen]
@@ -30,10 +39,11 @@ impl DesignEngine {
 
         Ok(DesignEngine {
             state: Rc::new(RefCell::new(state)),
-            renderer: RefCell::new(None),
+            renderer: Rc::new(RefCell::new(None)),
             queue: Rc::new(RefCell::new(queue)),
             create_generation: RefCell::new(0),
             listeners: RefCell::new(Vec::new()),
+            resize_observer: RefCell::new(None),
         })
     }
 
@@ -129,7 +139,7 @@ impl DesignEngine {
         *self.renderer.borrow_mut() = Some(new_renderer);
 
         // Attach event listeners to event targets (like checking window for "onmousemove")
-        self.create_event_listeners()?;
+        self.create_event_listeners(canvas_id)?;
 
         Ok(JsValue::from_bool(true))
     }
@@ -160,7 +170,7 @@ impl DesignEngine {
 
     /// Attaches event listeners to window and canvas for mouse events.
     /// Listeners are stored so they can be dropped later which stops them (aka "detaches").
-    fn create_event_listeners(&self) -> Result<(), JsError> {
+    fn create_event_listeners(&self, canvas_id: &str) -> Result<(), JsError> {
         let window = web_sys::window().ok_or(JsError::new(""))?;
         let canvas = self
             .renderer
@@ -172,6 +182,7 @@ impl DesignEngine {
 
         // Mouse move
         {
+            // Clone references to `move` into upcoming event listener closure
             let app_state = self.state.clone();
             let canvas = canvas.clone();
 
@@ -216,6 +227,49 @@ impl DesignEngine {
                 app_state.borrow_mut().handle_mouse_up();
             });
             self.listeners.borrow_mut().push(mouse_move_listener);
+        }
+
+        // Resize
+        {
+            let app_state = self.state.clone();
+            let renderer = self.renderer.clone();
+            let canvas_target = canvas.clone();
+
+            let callback =
+                Closure::<dyn FnMut(js_sys::Array)>::new(move |entries: js_sys::Array| {
+                    let Some(entry) = entries.get(0).dyn_into::<ResizeObserverEntry>().ok() else {
+                        return;
+                    };
+
+                    // CSS pixel size of the element
+                    let rect = entry.content_rect();
+                    let dpr = web_sys::window()
+                        .map(|w| w.device_pixel_ratio())
+                        .unwrap_or(1.0);
+
+                    let width = (rect.width() * dpr).round().max(1.0) as u32;
+                    let height = (rect.height() * dpr).round().max(1.0) as u32;
+
+                    // Keep the canvas backing store in sync with its display size
+                    canvas_target.set_width(width);
+                    canvas_target.set_height(height);
+
+                    app_state
+                        .borrow_mut()
+                        .set_width_and_height(width as u16, height as u16);
+
+                    if let Some(renderer) = renderer.borrow_mut().as_mut() {
+                        renderer.resize(width, height);
+                    }
+                });
+
+            let observer = ResizeObserver::new(callback.as_ref().unchecked_ref())
+                .expect("failed to create ResizeObserver");
+            observer.observe(&canvas);
+
+            // Keep both alive. If you drop the closure, the callback becomes invalid.
+            // Store them on `self` (or `.forget()` the closure if it lives for the app's lifetime).
+            *self.resize_observer.borrow_mut() = Some((observer, callback));
         }
 
         Ok(())

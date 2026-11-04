@@ -6,7 +6,7 @@ type Props = {};
 
 const DesignSidebar = (props: Props) => {
   return (
-    <Stack>
+    <Stack width={"300px"}>
       <LayersList />
     </Stack>
   );

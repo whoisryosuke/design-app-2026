@@ -1,6 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
 import { designEngineAtom } from "../../../store/renderer";
+import { css } from "../../../../styled-system/css";
+
+const canvasStyle = css({
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+});
+
+const canvasWrapper = css({
+  minWidth: 300,
+  flex: 1,
+  position: "relative",
+});
 
 const CANVAS_NAME = "preview";
 
@@ -64,8 +78,8 @@ const DesignCanvas = () => {
   }, [designEngine]);
 
   return (
-    <div>
-      <canvas id={CANVAS_NAME} width={800} height={600} />
+    <div className={canvasWrapper}>
+      <canvas id={CANVAS_NAME} className={canvasStyle} />
     </div>
   );
 };
