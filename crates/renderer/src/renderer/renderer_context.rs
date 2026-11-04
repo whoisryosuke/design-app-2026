@@ -123,7 +123,7 @@ impl RendererContext {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
         // @TODO: Handle renderer errors (`RenderError`)
-        self.renderer.render(
+        let _ = self.renderer.render(
             scene,
             &mut self.resources,
             &self.device,
@@ -154,10 +154,11 @@ impl RendererContext {
         };
         self.surface.configure(&self.device, surface_config);
 
-        let render_size = RenderSize {
-            width: width.try_into().unwrap_or(0),
-            height: height.try_into().unwrap_or(0),
+        self.render_size = RenderSize {
+            width: width.try_into().unwrap_or(1),
+            height: height.try_into().unwrap_or(1),
         };
-        self.depth_texture_view = Renderer::create_depth_texture_view(&self.device, &render_size);
+        self.depth_texture_view =
+            Renderer::create_depth_texture_view(&self.device, &self.render_size);
     }
 }
