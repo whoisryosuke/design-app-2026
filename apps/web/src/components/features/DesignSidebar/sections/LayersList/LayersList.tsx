@@ -4,11 +4,17 @@ import { designEngineAtom } from "../../../../../store/renderer";
 import { useAtomValue } from "jotai";
 import { Button } from "../../../../ui/Button/Button";
 import { Heading } from "../../../../ui/Typography/Heading";
+import type { DesignCommand, DraftLayer } from "design-app-renderer-types";
+import { Text } from "../../../../ui/Typography/Text";
+
+type UILayer = DraftLayer & {
+  order: bigint;
+};
 
 type Props = {};
 
 const LayersList = (props: Props) => {
-  const [layers, setLayers] = useState([]);
+  const [layers, setLayers] = useState<UILayer[]>([]);
   const renderer = useAtomValue(designEngineAtom);
 
   useEffect(() => {
@@ -27,29 +33,53 @@ const LayersList = (props: Props) => {
 
     const width = Math.round(Math.random() * 420);
     const height = Math.round(Math.random() * 420);
-    renderer.dispatch({
+    const x = Math.round(Math.random() * 420);
+    const y = Math.round(Math.random() * 420);
+    const draftLayer: DraftLayer = {
+      name: "Test",
+      kind: "Rect",
+      position: [x, y],
+      width,
+      height,
+      opacity: 1.0,
+      parent: null,
+      visible: true,
+      items: [],
+    };
+    const order = renderer.dispatch({
       AddLayer: {
-        layer: {
-          name: "Test",
-          kind: "Rect",
-          position: [0, 0],
-          width,
-          height,
-          opacity: 1.0,
-          parent: null,
-          visible: true,
-          items: [],
-        },
+        layer: draftLayer,
       },
     });
 
-    console.log("layer created?");
+    console.log("layer created?", order, draftLayer);
+
+    // @TODO: re-order using fractional index (aka `order`)
+    setLayers((prev) => [...prev, { ...draftLayer, order }]);
+  };
+
+  const handleSelectLayer = (order: UILayer["order"]) => {
+    if (!renderer) return;
+    renderer.dispatch({
+      SelectLayer: {
+        layer_id: order,
+      },
+    } as DesignCommand);
   };
 
   return (
     <Stack>
       <Heading as="h5">Layers</Heading>
-      <Stack></Stack>
+      <Stack>
+        {layers.map((layer, index) => (
+          <Text
+            id={`${layer.name}${index}`}
+            onClick={() => handleSelectLayer(layer.order)}
+          >
+            {layer.name} ({layer.kind.toString()})
+          </Text>
+        ))}
+      </Stack>
       <Button onClick={createDebugLayer}>Create layer</Button>
     </Stack>
   );
