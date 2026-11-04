@@ -8,7 +8,7 @@ import type { DesignCommand, DraftLayer } from "design-app-renderer-types";
 import { Text } from "../../../../ui/Typography/Text";
 
 type UILayer = DraftLayer & {
-  order: bigint;
+  id: bigint;
 };
 
 type Props = {};
@@ -52,23 +52,23 @@ const LayersList = (props: Props) => {
       visible: true,
       items: [],
     };
-    const order = renderer.dispatch({
+    const id = renderer.dispatch({
       AddLayer: {
         layer: draftLayer,
       },
     });
 
-    console.log("layer created?", order, draftLayer);
+    console.log("layer created?", id, draftLayer);
 
-    // @TODO: re-order using fractional index (aka `order`)
-    setLayers((prev) => [...prev, { ...draftLayer, order }]);
+    // @TODO: re-order using fractional index
+    setLayers((prev) => [...prev, { ...draftLayer, id }]);
   };
 
-  const handleSelectLayer = (order: UILayer["order"]) => {
+  const handleSelectLayer = (id: UILayer["id"]) => {
     if (!renderer) return;
     renderer.dispatch({
       SelectLayer: {
-        layer_id: order,
+        layer_id: id,
       },
     } as DesignCommand);
   };
@@ -80,7 +80,7 @@ const LayersList = (props: Props) => {
         {layers.map((layer, index) => (
           <Text
             id={`${layer.name}${index}`}
-            onClick={() => handleSelectLayer(layer.order)}
+            onClick={() => handleSelectLayer(layer.id)}
           >
             {layer.name} ({layer.kind.toString()})
           </Text>
