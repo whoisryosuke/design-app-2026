@@ -4,6 +4,7 @@ use vello_gpu::{
     Scene,
     color::palette::css,
     kurbo::{Affine, Circle, Rect, RoundedRect, Shape, Stroke},
+    peniko::Color,
 };
 use wasm_bindgen::{JsError, JsValue};
 
@@ -67,7 +68,7 @@ impl AppState {
         let layers = self.layers_service.layers.get_layers_by_parent(None);
 
         for (_, layer) in layers {
-            scene.set_paint(css::LIGHT_CYAN);
+            scene.set_paint(Color::new(layer.color.get_components()));
             scene.fill_rect(&Rect {
                 x0: layer.position.0,
                 y0: layer.position.0,

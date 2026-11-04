@@ -7,6 +7,49 @@ use ts_rs::TS;
 
 use crate::design::layer::layer_utils::convert_u64_to_default_key;
 
+/// Defaults to (s)RGBA
+#[derive(Default, Serialize, Deserialize, Clone, TS)]
+#[ts(export)]
+pub struct LayerColor {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+}
+
+impl LayerColor {
+    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
+        Self { r, g, b, a }
+    }
+
+    pub fn get_components(&self) -> [f32; 4] {
+        [self.r, self.g, self.b, self.a]
+    }
+
+    pub fn update(&mut self, r: f32, g: f32, b: f32, a: f32) {
+        self.set_red(r);
+        self.set_green(g);
+        self.set_blue(b);
+        self.set_alpha(a);
+    }
+
+    pub fn set_red(&mut self, r: f32) {
+        self.r = r.clamp(0.0, 1.0);
+    }
+
+    pub fn set_green(&mut self, g: f32) {
+        self.g = g.clamp(0.0, 1.0);
+    }
+
+    pub fn set_blue(&mut self, b: f32) {
+        self.b = b.clamp(0.0, 1.0);
+    }
+
+    pub fn set_alpha(&mut self, a: f32) {
+        self.a = a.clamp(0.0, 1.0);
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, TS)]
 #[ts(export)]
 pub enum FrameLayout {
@@ -44,6 +87,8 @@ pub struct DraftLayer {
     pub height: f64,
     pub visible: bool,
     pub opacity: f32,
+    pub color: LayerColor,
+
     /// ID of parent layer.
     /// We use u64 here and convert to SlotMap's DefaultKey later.
     pub parent: Option<u64>,
@@ -59,6 +104,8 @@ pub struct Layer {
     pub height: f64,
     pub visible: bool,
     pub opacity: f32,
+    pub color: LayerColor,
+
     pub parent: Option<DefaultKey>,
     pub items: BTreeMap<FractionalIndex, DefaultKey>,
 }
@@ -91,6 +138,7 @@ impl From<DraftLayer> for Layer {
             height: draft_layer.height,
             visible: draft_layer.visible,
             opacity: draft_layer.opacity,
+            color: draft_layer.color,
             parent,
             items,
         }

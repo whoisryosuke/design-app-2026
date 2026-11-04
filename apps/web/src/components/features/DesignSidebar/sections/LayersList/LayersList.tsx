@@ -42,6 +42,12 @@ const LayersList = (props: Props) => {
       width,
       height,
       opacity: 1.0,
+      color: {
+        r: Math.random(),
+        g: Math.random(),
+        b: Math.random(),
+        a: 1.0,
+      },
       parent: null,
       visible: true,
       items: [],
