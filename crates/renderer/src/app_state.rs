@@ -80,9 +80,9 @@ impl AppState {
             scene.set_paint(Color::new(layer.color.get_components()));
             scene.fill_rect(&Rect {
                 x0: layer.position.0,
-                y0: layer.position.0,
-                x1: layer.width,
-                y1: layer.height,
+                y0: layer.position.1,
+                x1: layer.position.0 + layer.width,
+                y1: layer.position.1 + layer.height,
             });
         }
 
@@ -92,9 +92,9 @@ impl AppState {
             scene.set_paint(css::BLUE);
             scene.stroke_rect(&Rect {
                 x0: selected_layer.position.0,
-                y0: selected_layer.position.0,
-                x1: selected_layer.width,
-                y1: selected_layer.height,
+                y0: selected_layer.position.1,
+                x1: selected_layer.position.0 + selected_layer.width,
+                y1: selected_layer.position.1 + selected_layer.height,
             });
         }
 
