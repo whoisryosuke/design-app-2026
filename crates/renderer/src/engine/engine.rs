@@ -52,13 +52,22 @@ impl DesignEngine {
                     .fetch_layers_by_parent(parent_id);
                 response
             }
-
-            // Mutable queue
-            // These commands are queued and run before scene is compiled and rendered.
-            _ => {
-                self.queue.borrow_mut().add(cmd, false);
-                Ok(JsValue::from_bool(true))
+            DesignCommand::AddLayer { layer } => {
+                let key = self.state.borrow_mut().layers_service.add_layer(layer);
+                Ok(JsValue::from(key))
             }
+            DesignCommand::SelectLayer { layer_id } => {
+                self.state
+                    .borrow_mut()
+                    .layers_service
+                    .select_layer(layer_id);
+                Ok(JsValue::from_bool(true))
+            } // Mutable queue
+              // These commands are queued and run before scene is compiled and rendered.
+              // _ => {
+              //     self.queue.borrow_mut().add(cmd, false);
+              //     Ok(JsValue::from_bool(true))
+              // }
         }
     }
 

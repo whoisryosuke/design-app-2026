@@ -4,6 +4,7 @@ use crate::design::layer::{
     layers::Layers,
 };
 use serde::Serialize;
+use slotmap::Key;
 use wasm_bindgen::{JsError, JsValue};
 
 /// A wrapper around Layers that provides WASM-friendly methods.
@@ -22,8 +23,10 @@ impl LayersService {
         Self { layers }
     }
 
-    pub fn add_layer(&mut self, layer: DraftLayer) {
-        self.layers.add_layer(layer);
+    pub fn add_layer(&mut self, layer: DraftLayer) -> u64 {
+        let key = self.layers.add_layer(layer);
+        let raw_key = key.data().as_ffi();
+        raw_key
     }
 
     pub fn fetch_layers(&self) -> Option<JsValue> {

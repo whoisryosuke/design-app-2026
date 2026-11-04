@@ -20,8 +20,8 @@ impl Layers {
         }
     }
 
-    pub fn add_layer(&mut self, layer: DraftLayer) {
-        self.layers.insert(layer.into());
+    pub fn add_layer(&mut self, layer: DraftLayer) -> DefaultKey {
+        self.layers.insert(layer.into())
     }
 
     pub fn get_layer_list(&self) -> Vec<LayerListResponse> {
