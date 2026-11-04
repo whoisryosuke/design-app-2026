@@ -117,6 +117,13 @@ impl DesignEngine {
                 .set_width_and_height(width as u16, height as u16);
         };
 
+        // Set the user's device resolution
+        {
+            self.state
+                .borrow_mut()
+                .set_resolution(new_renderer.get_canvas_resolution())
+        }
+
         // Store renderer locally directly in mutable pointer
         // (avoids `&mut self` which causes race conditions with other methods).
         *self.renderer.borrow_mut() = Some(new_renderer);

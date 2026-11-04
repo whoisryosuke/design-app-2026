@@ -89,7 +89,7 @@ impl Layers {
         x: f64,
         y: f64,
     ) -> Option<(DefaultKey, Layer)> {
-        let local = Point::new(x - layer.position.0, y - layer.position.1);
+        let local = Point::new(x, y);
 
         // Children are drawn on top of their parent, so check them first
         // if let Some(hit) = self.hit_test_children(key, local) {

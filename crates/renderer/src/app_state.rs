@@ -26,6 +26,8 @@ pub struct AppState {
     pub layers_service: LayersService,
     width: u16,
     height: u16,
+    /// Resolution of user's device ("device pixel ratio")
+    dpr: f64,
     mouse_state: MouseState,
 }
 
@@ -36,6 +38,7 @@ impl AppState {
             layers_service,
             width: width.unwrap_or(0),
             height: height.unwrap_or(0),
+            dpr: 1.0,
             mouse_state: MouseState::default(),
         }
     }
@@ -43,6 +46,10 @@ impl AppState {
     pub fn set_width_and_height(&mut self, width: u16, height: u16) {
         self.width = width;
         self.height = height;
+    }
+
+    pub fn set_resolution(&mut self, resolution: f64) {
+        self.dpr = resolution;
     }
 
     /// Build a simple scene: background, a circle, and an outlined rounded rect.
@@ -79,10 +86,10 @@ impl AppState {
         for (_, layer) in layers {
             scene.set_paint(Color::new(layer.color.get_components()));
             scene.fill_rect(&Rect {
-                x0: layer.position.0,
-                y0: layer.position.1,
-                x1: layer.position.0 + layer.width,
-                y1: layer.position.1 + layer.height,
+                x0: layer.position.0 * self.dpr,
+                y0: layer.position.1 * self.dpr,
+                x1: (layer.position.0 + layer.width) * self.dpr,
+                y1: (layer.position.1 + layer.height) * self.dpr,
             });
         }
 
@@ -91,10 +98,10 @@ impl AppState {
             scene.set_stroke(Stroke::new(3.0));
             scene.set_paint(css::BLUE);
             scene.stroke_rect(&Rect {
-                x0: selected_layer.position.0,
-                y0: selected_layer.position.1,
-                x1: selected_layer.position.0 + selected_layer.width,
-                y1: selected_layer.position.1 + selected_layer.height,
+                x0: selected_layer.position.0 * self.dpr,
+                y0: selected_layer.position.1 * self.dpr,
+                x1: (selected_layer.position.0 + selected_layer.width) * self.dpr,
+                y1: (selected_layer.position.1 + selected_layer.height) * self.dpr,
             });
         }
 
@@ -127,6 +134,8 @@ impl AppState {
     }
 
     fn find_layer_by_position(&mut self, x: f64, y: f64) {
+        let x = x / self.dpr;
+        let y = y / self.dpr;
         if let Some((key, _)) = self.layers_service.layers.find_layer_by_position(x, y) {
             self.layers_service.layers.select_layer(key);
         }

@@ -48,6 +48,12 @@ impl DesignRenderer {
         self.canvas.clone()
     }
 
+    pub fn get_canvas_resolution(&self) -> f64 {
+        web_sys::window()
+            .map(|w| w.device_pixel_ratio())
+            .unwrap_or(1.0)
+    }
+
     /// Manually render. Not used since we have RAF run render process.
     async fn render(&mut self, scene: &Scene) -> Result<(), JsValue> {
         self.renderer_context.borrow_mut().render(scene);
