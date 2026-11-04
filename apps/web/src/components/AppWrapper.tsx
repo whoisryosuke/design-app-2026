@@ -22,6 +22,7 @@ export const AppWrapper = ({
     <div className={cx(theme == "dark" ? "dark" : "", className)}>
       <Stack
         backgroundColor="gray.1"
+        color="gray.12"
         width="100%"
         minHeight="100%"
         maxHeight="100%"
