@@ -29,7 +29,7 @@ const BackendEventSync = (props: Props) => {
     };
   }, [engine]);
 
-  return <div>BackendEventSync</div>;
+  return <></>;
 };
 
 export default BackendEventSync;

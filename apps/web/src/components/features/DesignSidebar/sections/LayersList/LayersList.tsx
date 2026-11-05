@@ -24,7 +24,8 @@ const LayersList = (props: Props) => {
   useEffect(() => {
     if (!renderer) return;
     const newLayers = renderer.dispatch({
-      FetchLayersByParent: {
+      type: "FetchLayersByParent",
+      payload: {
         parent_id: null,
       },
     });
@@ -57,7 +58,8 @@ const LayersList = (props: Props) => {
       items: [],
     };
     const id = renderer.dispatch({
-      AddLayer: {
+      type: "AddLayer",
+      payload: {
         layer: draftLayer,
       },
     });
@@ -70,9 +72,11 @@ const LayersList = (props: Props) => {
 
   const handleSelectLayer = (id: UILayer["id"]) => {
     if (!renderer) return;
+    console.log("layer selected", id);
     // Select in backend
     renderer.dispatch({
-      SelectLayer: {
+      type: "SelectLayer",
+      payload: {
         layer_id: id,
       },
     } as DesignCommand);

@@ -7,9 +7,9 @@ export type DesignEventPayload<T extends DesignEventType> = Extract<
   { type: T }
 >["payload"];
 
-// type DesignCommandType = DesignCommand["type"];
+type DesignCommandType = DesignCommand["type"];
 
-// export type DesignCommandPayload<T extends DesignCommandType> = Extract<
-//   DesignEvent,
-//   { type: T }
-// >["payload"];
+export type DesignCommandPayload<T extends DesignCommandType> = Extract<
+  DesignEvent,
+  { type: T }
+>["payload"];

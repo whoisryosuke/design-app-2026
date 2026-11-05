@@ -28,7 +28,8 @@ const LayerEditor = ({ layer, ...props }: Props) => {
       // Save to backend
       // @ts-expect-error - I use `keyof` above...
       engine?.dispatch({
-        UpdateLayer: {
+        type: "UpdateLayer",
+        payload: {
           layer_id: layer.id,
           data: {
             [prop]: parsed,

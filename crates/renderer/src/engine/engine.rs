@@ -7,6 +7,8 @@ use crate::{
     utils::wasm::get_canvas_element,
 };
 use gloo_events::EventListener;
+use serde::Serialize;
+use serde_wasm_bindgen::Serializer;
 use slotmap::Key;
 use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::prelude::*;
@@ -259,8 +261,10 @@ impl DesignEngine {
                         if let Ok(callback) = frontend_callback.try_borrow_mut().as_deref_mut() {
                             if let Some(cb) = callback {
                                 let key = layer_id.data().as_ffi();
+                                let serializer =
+                                    Serializer::new().serialize_large_number_types_as_bigints(true);
                                 let event = DesignEvent::LayerSelected { layer_id: key };
-                                if let Ok(js_event) = serde_wasm_bindgen::to_value(&event) {
+                                if let Ok(js_event) = event.serialize(&serializer) {
                                     cb.call1(&JsValue::NULL, &js_event);
                                 }
                             }

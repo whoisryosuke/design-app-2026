@@ -2,4 +2,4 @@
 import type { DraftLayer } from "./DraftLayer";
 import type { UpdateLayer } from "./UpdateLayer";
 
-export type DesignCommand = { "AddLayer": { layer: DraftLayer, } } | { "SelectLayer": { layer_id: bigint, } } | { "FetchLayersByParent": { parent_id: bigint | null, } } | { "UpdateLayer": { layer_id: bigint, data: UpdateLayer, } };
+export type DesignCommand = { "type": "AddLayer", "payload": { layer: DraftLayer, } } | { "type": "SelectLayer", "payload": { layer_id: bigint, } } | { "type": "FetchLayersByParent", "payload": { parent_id: bigint | null, } } | { "type": "UpdateLayer", "payload": { layer_id: bigint, data: UpdateLayer, } };
