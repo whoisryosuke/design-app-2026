@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
 import { Stack } from "../../../../../../styled-system/jsx";
 import { designEngineAtom } from "../../../../../store/renderer";
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { Button } from "../../../../ui/Button/Button";
 import { Heading } from "../../../../ui/Typography/Heading";
 import type { DesignCommand, DraftLayer } from "design-app-renderer-types";
 import { Text } from "../../../../ui/Typography/Text";
-
-type UILayer = DraftLayer & {
-  id: bigint;
-};
+import {
+  selectedLayerAtom,
+  type LayerId,
+  type UILayer,
+} from "../../../../../store/app";
+import LayerListItem from "./LayerListItem";
 
 type Props = {};
 
 const LayersList = (props: Props) => {
   const [layers, setLayers] = useState<UILayer[]>([]);
   const renderer = useAtomValue(designEngineAtom);
+  const [selectedLayer, setSelectedLayer] = useAtom(selectedLayerAtom);
 
   useEffect(() => {
     if (!renderer) return;
@@ -66,24 +69,28 @@ const LayersList = (props: Props) => {
 
   const handleSelectLayer = (id: UILayer["id"]) => {
     if (!renderer) return;
+    // Select in backend
     renderer.dispatch({
       SelectLayer: {
         layer_id: id,
       },
     } as DesignCommand);
+
+    // Select in frontend
+    setSelectedLayer(id);
   };
 
   return (
     <Stack>
       <Heading as="h5">Layers</Heading>
-      <Stack>
-        {layers.map((layer, index) => (
-          <Text
-            id={`${layer.name}${index}`}
-            onClick={() => handleSelectLayer(layer.id)}
-          >
-            {layer.name} ({layer.kind.toString()})
-          </Text>
+      <Stack gap="0">
+        {layers.map((layer) => (
+          <LayerListItem
+            key={layer.id}
+            layer={layer}
+            selected={layer.id == selectedLayer}
+            handleSelectLayer={handleSelectLayer}
+          />
         ))}
       </Stack>
       <Button onClick={createDebugLayer}>Create layer</Button>
