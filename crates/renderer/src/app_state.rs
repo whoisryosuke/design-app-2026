@@ -112,7 +112,12 @@ impl AppState {
         self.build_scene(timestamp)
     }
 
-    pub fn handle_mouse_down(&mut self, canvas: &HtmlCanvasElement, x: f64, y: f64) {
+    pub fn handle_mouse_down(
+        &mut self,
+        canvas: &HtmlCanvasElement,
+        x: f64,
+        y: f64,
+    ) -> Option<DefaultKey> {
         // Update mouse state
         self.mouse_state.clicked = true;
 
@@ -120,7 +125,9 @@ impl AppState {
         self.mouse_state.last_position = (x, y);
 
         // Check if any layers can be selected
-        self.find_layer_by_position(x, y);
+        let layer_id = self.find_layer_by_position(x, y);
+
+        layer_id
     }
 
     pub fn handle_mouse_up(&mut self) {
@@ -133,12 +140,16 @@ impl AppState {
         self.mouse_state.last_position = (x, y);
     }
 
-    fn find_layer_by_position(&mut self, x: f64, y: f64) {
+    fn find_layer_by_position(&mut self, x: f64, y: f64) -> Option<DefaultKey> {
+        // We get mouse coordinates scaled to resolution
+        // so we convert it to "CSS" coordinates (same as design data)
         let x = x / self.dpr;
         let y = y / self.dpr;
         if let Some((key, _)) = self.layers_service.layers.find_layer_by_position(x, y) {
             self.layers_service.layers.select_layer(key);
+            return Some(key);
         }
+        return None;
     }
 }
 
