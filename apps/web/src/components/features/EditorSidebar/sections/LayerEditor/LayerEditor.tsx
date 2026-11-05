@@ -3,8 +3,13 @@ import type { UILayer } from "../../../../../store/app";
 import { Heading } from "../../../../ui/Typography/Heading";
 import { Text } from "../../../../ui/Typography/Text";
 import { Stack } from "../../../../../../styled-system/jsx";
-import NumberInput from "../../../../ui/Input/NumberInput/NumberInput";
+import NumberInput, {
+  type InputValue,
+} from "../../../../ui/Input/NumberInput/NumberInput";
 import { css } from "../../../../../../styled-system/css";
+import { useAtomValue } from "jotai";
+import { designEngineAtom } from "../../../../../store/renderer";
+import type { DesignCommand, UpdateLayer } from "design-app-renderer-types";
 
 const headingStyle = css({
   color: "gray.10",
@@ -15,6 +20,26 @@ type Props = {
 };
 
 const LayerEditor = ({ layer, ...props }: Props) => {
+  const engine = useAtomValue(designEngineAtom);
+  const handleNumberChange =
+    (prop: keyof UpdateLayer) => (value: InputValue) => {
+      const parsed = parseFloat(`${value}`);
+
+      // Save to backend
+      // @ts-expect-error - I use `keyof` above...
+      engine?.dispatch({
+        UpdateLayer: {
+          layer_id: layer.id,
+          data: {
+            [prop]: parsed,
+          },
+        },
+      } as DesignCommand);
+
+      // Send to input to update internal state
+      return parsed;
+    };
+
   return (
     <Stack minWidth="300px" p={3}>
       <Heading as="h5">{layer.kind.toString()}</Heading>
@@ -26,14 +51,14 @@ const LayerEditor = ({ layer, ...props }: Props) => {
           name="position-x"
           label="Position"
           icon={<Text>X</Text>}
-          value={layer.position[0]}
-          onChange={() => {}}
+          defaultValue={layer.position[0]}
+          onSubmit={handleNumberChange("position_x")}
         />
         <NumberInput
           name="position-y"
           icon={<Text>Y</Text>}
-          value={layer.position[1]}
-          onChange={() => {}}
+          defaultValue={layer.position[1]}
+          onSubmit={handleNumberChange("position_y")}
         />
       </Stack>
       <Heading as="h6" className={headingStyle}>
@@ -44,14 +69,14 @@ const LayerEditor = ({ layer, ...props }: Props) => {
           name="dimension-width"
           label="Dimensions"
           icon={<Text>W</Text>}
-          value={layer.width}
-          onChange={() => {}}
+          defaultValue={layer.width}
+          onSubmit={handleNumberChange("width")}
         />
         <NumberInput
           name="dimension-height"
           icon={<Text>H</Text>}
-          value={layer.height}
-          onChange={() => {}}
+          defaultValue={layer.height}
+          onSubmit={handleNumberChange("height")}
         />
       </Stack>
     </Stack>

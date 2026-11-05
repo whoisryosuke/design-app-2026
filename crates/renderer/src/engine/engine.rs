@@ -77,6 +77,13 @@ impl DesignEngine {
                     .layers_service
                     .select_layer(layer_id);
                 Ok(JsValue::from_bool(true))
+            }
+            DesignCommand::UpdateLayer { layer_id, data } => {
+                self.state
+                    .borrow_mut()
+                    .layers_service
+                    .update_layer(layer_id, data);
+                Ok(JsValue::from_bool(true))
             } // Mutable queue
               // These commands are queued and run before scene is compiled and rendered.
               // _ => {

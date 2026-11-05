@@ -4,3 +4,4 @@ export * from "./DraftLayerItem";
 export * from "./FrameLayout";
 export * from "./LayerColor";
 export * from "./LayerKind";
+export * from "./UpdateLayer";

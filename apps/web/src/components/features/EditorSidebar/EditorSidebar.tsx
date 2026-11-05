@@ -14,7 +14,7 @@ const EditorSidebar = (props: Props) => {
   return (
     <Stack bg="gray.4">
       {selectedLayer ? (
-        <LayerEditor layer={selectedLayer} />
+        <LayerEditor key={selectedLayerId} layer={selectedLayer} />
       ) : (
         "Select a layer first"
       )}

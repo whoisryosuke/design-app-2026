@@ -1,5 +1,5 @@
 use crate::design::layer::{
-    layer::{DraftLayer, LayerListResponse},
+    layer::{DraftLayer, LayerListResponse, UpdateLayer},
     layer_utils::convert_u64_to_default_key,
     layers::Layers,
 };
@@ -49,5 +49,43 @@ impl LayersService {
         let layer_response = Layers::create_layers_response(layers);
 
         serde_wasm_bindgen::to_value(&layer_response).map_err(|err| JsError::new(&err.to_string()))
+    }
+
+    pub fn update_layer(&mut self, layer_id: u64, data: UpdateLayer) {
+        let layer_id = convert_u64_to_default_key(layer_id);
+
+        if let Some(layer) = self.layers.get_mutable_layer(layer_id) {
+            // Update each property that was provided
+            if let Some(name) = data.name {
+                layer.name = name;
+            }
+            if let Some(kind) = data.kind {
+                layer.kind = kind;
+            }
+            if let Some(position_x) = data.position_x {
+                layer.position.0 = position_x;
+            }
+            if let Some(position_y) = data.position_y {
+                layer.position.1 = position_y;
+            }
+            if let Some(width) = data.width {
+                layer.width = width;
+            }
+            if let Some(height) = data.height {
+                layer.height = height;
+            }
+            if let Some(visible) = data.visible {
+                layer.visible = visible;
+            }
+            if let Some(opacity) = data.opacity {
+                layer.opacity = opacity;
+            }
+            if let Some(color) = data.color {
+                layer.color = color;
+            }
+            if let Some(parent) = data.parent {
+                layer.parent = Some(convert_u64_to_default_key(parent));
+            }
+        }
     }
 }

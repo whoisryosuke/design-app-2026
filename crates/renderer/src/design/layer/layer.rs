@@ -68,6 +68,21 @@ pub enum LayerKind {
 
 #[derive(Serialize, Deserialize, Clone, TS)]
 #[ts(export)]
+pub struct UpdateLayer {
+    pub name: Option<String>,
+    pub kind: Option<LayerKind>,
+    pub position_x: Option<f64>,
+    pub position_y: Option<f64>,
+    pub width: Option<f64>,
+    pub height: Option<f64>,
+    pub visible: Option<bool>,
+    pub opacity: Option<f32>,
+    pub color: Option<LayerColor>,
+    pub parent: Option<u64>,
+}
+
+#[derive(Serialize, Deserialize, Clone, TS)]
+#[ts(export)]
 pub struct DraftLayerItem {
     /// Order of nested layer.
     /// Uses fractional indexing in string form.

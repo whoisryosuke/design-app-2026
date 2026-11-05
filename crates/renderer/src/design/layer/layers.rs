@@ -21,6 +21,10 @@ impl Layers {
         }
     }
 
+    pub fn get_mutable_layer(&mut self, id: DefaultKey) -> Option<&mut Layer> {
+        self.layers.get_mut(id)
+    }
+
     pub fn add_layer(&mut self, layer: DraftLayer) -> DefaultKey {
         self.layers.insert(layer.into())
     }
