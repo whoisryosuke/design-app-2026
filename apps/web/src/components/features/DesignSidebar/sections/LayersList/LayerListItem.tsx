@@ -2,16 +2,21 @@ import React from "react";
 import type { LayerId, UILayer } from "../../../../../store/app";
 import { cva, cx } from "../../../../../../styled-system/css";
 import { text } from "design-app-design-system/recipes";
+import { BiRectangle } from "react-icons/bi";
 
 const itemStyle = cva({
   base: {
     display: "flex",
+    alignItems: "center",
+    gap: "3",
+
     bg: {
       base: "transparent",
       _hover: "gray.alpha-3",
     },
     px: 3,
     py: 2,
+    fontSize: "2",
 
     _motionSafe: {
       transitionProperty: "background-color, color",
@@ -48,7 +53,10 @@ const LayerListItem = ({
   const handleClick = () => handleSelectLayer(layer.id);
   return (
     <button className={cx(text(), itemClass)} onClick={handleClick} {...props}>
-      {layer.name} ({layer.kind.toString()})
+      <BiRectangle />
+      <span>
+        {layer.name} ({layer.kind.toString()})
+      </span>
     </button>
   );
 };

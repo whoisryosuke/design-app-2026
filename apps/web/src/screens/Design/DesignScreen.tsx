@@ -7,7 +7,7 @@ type Props = {};
 
 const DesignScreen = (props: Props) => {
   return (
-    <Stack flexDirection="row" flex={1}>
+    <Stack flexDirection="row" flex={1} gap="0">
       <DesignSidebar />
       <DesignCanvas />
       <EditorSidebar />

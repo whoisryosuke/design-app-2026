@@ -5,29 +5,29 @@ import { cva, cx } from "../../../../styled-system/css";
 const headingStyles = cva({
   base: {
     fontFamily: "heading",
-    fontWeight: "bold",
-    lineHeight: 1.1,
+    fontWeight: 600,
+    lineHeight: 1.5,
     color: "gray.12",
   },
   variants: {
     as: {
       h1: {
-        fontSize: "textSize.h1",
+        fontSize: "7",
       },
       h2: {
-        fontSize: "textSize.h2",
+        fontSize: "6",
       },
       h3: {
-        fontSize: "textSize.h3",
+        fontSize: "5",
       },
       h4: {
-        fontSize: "textSize.h4",
+        fontSize: "4",
       },
       h5: {
-        fontSize: "textSize.h5",
+        fontSize: "3",
       },
       h6: {
-        fontSize: "textSize.h5",
+        fontSize: "2",
       },
     },
   },

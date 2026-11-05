@@ -2,7 +2,7 @@ import { breakpoints } from "./tokens/breakpoints";
 import { containerSizes } from "./tokens/containers";
 import { keyframes } from "./tokens/keyframes";
 import { tokens } from "./tokens/tokens";
-import { fluidFontSizes, fontsSemantic, textStyles } from "./tokens/typography";
+import { fontsSemantic, textStyles } from "./tokens/typography";
 import { semanticColors } from "./tokens/colors";
 import textRecipe from "./recipes/text.recipe";
 import buttonRecipe from "./recipes/button.recipe";
@@ -25,7 +25,6 @@ export const tuningWavesPreset = definePreset({
     semanticTokens: {
       colors: semanticColors,
       fonts: fontsSemantic,
-      fontSizes: { textSize: fluidFontSizes },
     },
   },
 

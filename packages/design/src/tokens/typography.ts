@@ -17,21 +17,6 @@ export const fontSizes: Tokens["fontSizes"] = {
   13: { value: "8rem" },
 };
 
-// Responsive font sizing using CSS `clamp()`.
-// Since Panda CSS doesn't like runtime functions, we bake them as tokens here.
-export const fluidFontSize = (min: string, max: string) =>
-  `clamp(${min}, 5vw + 0.5rem, ${max})`;
-
-export const fluidFontSizes: NonNullable<SemanticTokens["fontSizes"]> = {
-  h1: { value: fluidFontSize("{fontSizes.8}", "{fontSizes.10}") },
-  h2: { value: fluidFontSize("{fontSizes.7}", "{fontSizes.9}") },
-  h3: { value: fluidFontSize("{fontSizes.6}", "{fontSizes.8}") },
-  h4: { value: fluidFontSize("{fontSizes.5}", "{fontSizes.7}") },
-  h5: { value: fluidFontSize("{fontSizes.4}", "{fontSizes.6}") },
-  h6: { value: fluidFontSize("{fontSizes.3}", "{fontSizes.5}") },
-  p: { value: fluidFontSize("{fontSizes.1}", "{fontSizes.3}") },
-};
-
 export const fontWeights: Tokens["fontWeights"] = {
   thin: { value: "100" },
   extralight: { value: "200" },

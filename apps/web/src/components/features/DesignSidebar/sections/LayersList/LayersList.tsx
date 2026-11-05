@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Stack } from "../../../../../../styled-system/jsx";
+import { Box, Stack } from "../../../../../../styled-system/jsx";
 import { designEngineAtom } from "../../../../../store/renderer";
 import { useAtom, useAtomValue } from "jotai";
 import { Button } from "../../../../ui/Button/Button";
@@ -7,6 +7,7 @@ import { Heading } from "../../../../ui/Typography/Heading";
 import type { DesignCommand, DraftLayer } from "design-app-renderer-types";
 import { Text } from "../../../../ui/Typography/Text";
 import {
+  layersAtom,
   selectedLayerAtom,
   type LayerId,
   type UILayer,
@@ -16,9 +17,9 @@ import LayerListItem from "./LayerListItem";
 type Props = {};
 
 const LayersList = (props: Props) => {
-  const [layers, setLayers] = useState<UILayer[]>([]);
-  const renderer = useAtomValue(designEngineAtom);
+  const [layers, setLayers] = useAtom(layersAtom);
   const [selectedLayer, setSelectedLayer] = useAtom(selectedLayerAtom);
+  const renderer = useAtomValue(designEngineAtom);
 
   useEffect(() => {
     if (!renderer) return;
@@ -82,7 +83,20 @@ const LayersList = (props: Props) => {
 
   return (
     <Stack>
-      <Heading as="h5">Layers</Heading>
+      <Stack borderBottomWidth="1px" borderColor="gray.6" borderStyle="solid">
+        <Box px="3" py="2">
+          <Heading as="h5">Pages</Heading>
+        </Box>
+      </Stack>
+      <Box
+        px="3"
+        py="2"
+        borderBottomWidth="1px"
+        borderColor="gray.6"
+        borderStyle="solid"
+      >
+        <Heading as="h5">Layers</Heading>
+      </Box>
       <Stack gap="0">
         {layers.map((layer) => (
           <LayerListItem

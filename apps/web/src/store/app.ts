@@ -9,3 +9,4 @@ export type UILayer = DraftLayer & {
 };
 
 export const selectedLayerAtom = atom<LayerId | null>(null);
+export const layersAtom = atom<UILayer[]>([]);

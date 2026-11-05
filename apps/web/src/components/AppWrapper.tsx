@@ -28,6 +28,7 @@ export const AppWrapper = ({
         maxHeight="100%"
         position="absolute"
         inset={0}
+        gap={0}
       >
         <TopNavigation />
         {children}
