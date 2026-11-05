@@ -110,4 +110,16 @@ impl Layers {
             .contains(local)
             .then_some((key.clone(), layer.clone()))
     }
+
+    pub fn drag_selected_layer(&mut self, x: f64, y: f64) {
+        let layer = self
+            .layers
+            .iter_mut()
+            .find(|(layer_id, _)| *layer_id == self.selected_layer);
+
+        if let Some((_, layer_data)) = layer {
+            layer_data.position.0 += x;
+            layer_data.position.1 += y;
+        }
+    }
 }

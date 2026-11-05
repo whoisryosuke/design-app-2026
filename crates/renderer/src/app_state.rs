@@ -16,9 +16,18 @@ use crate::design::layer::{
 };
 
 #[derive(Default, Serialize, Clone)]
+pub enum InteractionMode {
+    #[default]
+    Idle,
+    Selecting,
+    Dragging,
+}
+
+#[derive(Default, Serialize, Clone)]
 pub struct MouseState {
     pub clicked: bool,
     pub last_position: (f64, f64),
+    pub interaction_mode: InteractionMode,
 }
 
 #[derive(Serialize, Clone)]
@@ -127,16 +136,42 @@ impl AppState {
         // Check if any layers can be selected
         let layer_id = self.find_layer_by_position(x, y);
 
+        // Selected a layer? Let system know new interaction mode
+        match layer_id {
+            Some(_) => self.mouse_state.interaction_mode = InteractionMode::Selecting,
+            None => self.mouse_state.interaction_mode = InteractionMode::Idle,
+        }
+
         layer_id
     }
 
     pub fn handle_mouse_up(&mut self) {
         self.mouse_state.clicked = false;
         self.mouse_state.last_position = (0.0, 0.0);
+        self.mouse_state.interaction_mode = InteractionMode::Idle;
     }
 
     pub fn handle_mouse_move(&mut self, canvas: &HtmlCanvasElement, x: f64, y: f64) {
         let (x, y) = convert_mouse_to_canvas_position(&canvas, x, y);
+
+        // Handle "dragging" functionality
+        match self.mouse_state.interaction_mode {
+            // Draw selection box
+            InteractionMode::Idle => {}
+            // Enable dragging/movement of layer
+            InteractionMode::Selecting => {
+                self.mouse_state.interaction_mode = InteractionMode::Dragging;
+            }
+            // Move layer/object
+            InteractionMode::Dragging => {
+                // Get distance of drag (aka "delta") and remove resolution (aka scale to CSS-space)
+                let delta_x = (x - self.mouse_state.last_position.0) / self.dpr;
+                let delta_y = (y - self.mouse_state.last_position.1) / self.dpr;
+                self.layers_service.drag_selected_layer(delta_x, delta_y);
+            }
+        }
+
+        // Update last position last (in case anything needs to use it for delta math)
         self.mouse_state.last_position = (x, y);
     }
 

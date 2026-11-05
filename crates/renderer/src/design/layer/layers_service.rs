@@ -88,4 +88,8 @@ impl LayersService {
             }
         }
     }
+
+    pub fn drag_selected_layer(&mut self, x: f64, y: f64) {
+        self.layers.drag_selected_layer(x, y);
+    }
 }
