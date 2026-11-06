@@ -1,11 +1,19 @@
 use serde::Serialize;
 use slotmap::{DefaultKey, Key, KeyData, SlotMap};
+use ts_rs::TS;
 use vello_gpu::kurbo::{Point, Rect};
 
 use crate::design::layer::{
     layer::{DraftLayer, Layer, LayerListResponse},
-    layer_utils::convert_u64_to_default_key,
+    layer_utils::{convert_default_key_to_u64, convert_u64_to_default_key},
 };
+
+#[derive(Serialize, Clone, TS)]
+#[ts(export)]
+pub struct DragLayerUpdate {
+    pub layer_id: u64,
+    pub position: (f64, f64),
+}
 
 #[derive(Serialize, Clone)]
 pub struct Layers {
@@ -111,15 +119,23 @@ impl Layers {
             .then_some((key.clone(), layer.clone()))
     }
 
-    pub fn drag_selected_layer(&mut self, x: f64, y: f64) {
+    pub fn drag_selected_layer(&mut self, x: f64, y: f64) -> Option<DragLayerUpdate> {
         let layer = self
             .layers
             .iter_mut()
             .find(|(layer_id, _)| *layer_id == self.selected_layer);
 
-        if let Some((_, layer_data)) = layer {
-            layer_data.position.0 += x;
-            layer_data.position.1 += y;
+        if let Some((key, layer_data)) = layer {
+            let new_x = layer_data.position.0 + x;
+            let new_y = layer_data.position.1 + y;
+            layer_data.position.0 = new_x;
+            layer_data.position.1 = new_y;
+
+            return Some(DragLayerUpdate {
+                layer_id: convert_default_key_to_u64(key),
+                position: (new_x, new_y),
+            });
         }
+        None
     }
 }

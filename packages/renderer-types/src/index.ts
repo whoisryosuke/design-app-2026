@@ -2,6 +2,7 @@ export * from "./DesignCommand";
 export * from "./DesignEvent";
 export * from "./DraftLayer";
 export * from "./DraftLayerItem";
+export * from "./DragLayerUpdate";
 export * from "./FrameLayout";
 export * from "./LayerColor";
 export * from "./LayerKind";

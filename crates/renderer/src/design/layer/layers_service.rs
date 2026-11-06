@@ -1,7 +1,7 @@
 use crate::design::layer::{
     layer::{DraftLayer, LayerListResponse, UpdateLayer},
     layer_utils::convert_u64_to_default_key,
-    layers::Layers,
+    layers::{DragLayerUpdate, Layers},
 };
 use serde::Serialize;
 use slotmap::Key;
@@ -89,7 +89,7 @@ impl LayersService {
         }
     }
 
-    pub fn drag_selected_layer(&mut self, x: f64, y: f64) {
-        self.layers.drag_selected_layer(x, y);
+    pub fn drag_selected_layer(&mut self, x: f64, y: f64) -> Option<DragLayerUpdate> {
+        self.layers.drag_selected_layer(x, y)
     }
 }

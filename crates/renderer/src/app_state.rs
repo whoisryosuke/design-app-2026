@@ -191,7 +191,17 @@ impl AppState {
                 // Get distance of drag (aka "delta") and remove resolution (aka scale to CSS-space)
                 let delta_x = (x - self.mouse_state.last_position.0) / self.dpr;
                 let delta_y = (y - self.mouse_state.last_position.1) / self.dpr;
-                self.layers_service.drag_selected_layer(delta_x, delta_y);
+                let movement_result = self.layers_service.drag_selected_layer(delta_x, delta_y);
+
+                // Update UI with new position (useful for editor sidebar)
+                // @TODO: Can we throttle this? Either here or in frontend.
+                if let Some(data) = movement_result {
+                    let event = DesignEvent::LayerMoved {
+                        layer_id: data.layer_id,
+                        position: data.position,
+                    };
+                    self.emit(event);
+                }
             }
         }
 

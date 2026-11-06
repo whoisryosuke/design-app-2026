@@ -6,4 +6,5 @@ use ts_rs::TS;
 #[serde(tag = "type", content = "payload")]
 pub enum DesignEvent {
     LayerSelected { layer_id: u64 },
+    LayerMoved { layer_id: u64, position: (f64, f64) },
 }
