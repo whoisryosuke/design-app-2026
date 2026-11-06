@@ -43,6 +43,7 @@ pub struct MouseState {
     pub clicked: bool,
     pub last_position: (f64, f64),
     pub interaction_mode: InteractionMode,
+    pub hover_mode: InteractionMode,
 }
 
 #[derive(Serialize, Clone)]
@@ -239,21 +240,38 @@ impl AppState {
         // Check if any layers can be selected
         let layer_id_result = self.find_layer_by_position(x, y);
 
-        // Selected a layer? Change interaction mode + emit event to UI
-        match layer_id_result {
-            Some(layer_id) => {
-                // Let frontend know layer was selected
-                let key = layer_id.data().as_ffi();
-                let event = DesignEvent::LayerSelected { layer_id: key };
-                self.emit(event);
+        match self.mouse_state.hover_mode {
+            InteractionMode::Idle => {
+                // Selected a layer? Change interaction mode + emit event to UI
+                match layer_id_result {
+                    Some(layer_id) => {
+                        // @TODO: Check if user is clicking selected layer twice within
+                        // short time to activate editing mode
 
-                // Let system know new interaction mode
-                self.mouse_state.interaction_mode = InteractionMode::Selecting;
+                        // Let frontend know layer was selected
+                        let key = layer_id.data().as_ffi();
+                        let event = DesignEvent::LayerSelected { layer_id: key };
+                        self.emit(event);
+
+                        // Let system know new interaction mode
+                        self.mouse_state.interaction_mode = InteractionMode::Selecting;
+                    }
+                    None => self.mouse_state.interaction_mode = InteractionMode::Idle,
+                }
+
+                return layer_id_result;
             }
-            None => self.mouse_state.interaction_mode = InteractionMode::Idle,
+            InteractionMode::ResizingHorizontal { right_side } => {
+                self.mouse_state.interaction_mode =
+                    InteractionMode::ResizingHorizontal { right_side };
+            }
+            InteractionMode::ResizingVertical { bottom_side } => todo!(),
+            InteractionMode::ResizingCorner => todo!(),
+            InteractionMode::Rotating => todo!(),
+            _ => {}
         }
 
-        layer_id_result
+        None
     }
 
     pub fn handle_mouse_up(&mut self) {
@@ -294,10 +312,8 @@ impl AppState {
                 };
                 self.emit(event);
 
-                if self.mouse_state.clicked {
-                    self.mouse_state.interaction_mode =
-                        InteractionMode::ResizingHorizontal { right_side: false };
-                }
+                self.mouse_state.hover_mode =
+                    InteractionMode::ResizingHorizontal { right_side: false };
                 return;
             }
 
@@ -315,10 +331,8 @@ impl AppState {
                 };
                 self.emit(event);
 
-                if self.mouse_state.clicked {
-                    self.mouse_state.interaction_mode =
-                        InteractionMode::ResizingHorizontal { right_side: true };
-                }
+                self.mouse_state.hover_mode =
+                    InteractionMode::ResizingHorizontal { right_side: true };
                 return;
             }
 
@@ -336,10 +350,8 @@ impl AppState {
                 };
                 self.emit(event);
 
-                if self.mouse_state.clicked {
-                    self.mouse_state.interaction_mode =
-                        InteractionMode::ResizingVertical { bottom_side: false };
-                }
+                self.mouse_state.hover_mode =
+                    InteractionMode::ResizingVertical { bottom_side: false };
 
                 return;
             }
@@ -358,16 +370,14 @@ impl AppState {
                 };
                 self.emit(event);
 
-                if self.mouse_state.clicked {
-                    self.mouse_state.interaction_mode =
-                        InteractionMode::ResizingVertical { bottom_side: true };
-                }
+                self.mouse_state.hover_mode =
+                    InteractionMode::ResizingVertical { bottom_side: true };
                 return;
             }
 
             // Didn't find an interaction? Revert back to selecting.
-            if self.mouse_state.interaction_mode != InteractionMode::Selecting {
-                self.mouse_state.interaction_mode = InteractionMode::Selecting;
+            if self.mouse_state.hover_mode != InteractionMode::Idle {
+                self.mouse_state.hover_mode = InteractionMode::Idle;
                 // Change icon in frontend
                 let event = DesignEvent::MouseCursorChanged {
                     cursor: MouseCursors::Default,
@@ -379,7 +389,7 @@ impl AppState {
 
     fn handle_resizing_horizontal(&mut self, x: f64, right_side: bool) {
         if let Some(selected_layer) = self.layers_service.layers.get_mutable_selected_layer() {
-            let distance_x = x - self.mouse_state.last_position.0 / self.dpr;
+            let distance_x = (x - self.mouse_state.last_position.0) / self.dpr;
 
             // Right side? Just increase width.
             // We can assume user
@@ -436,9 +446,7 @@ impl AppState {
             }
             InteractionMode::ResizingHorizontal { right_side } => {
                 // Object is selected and we're clicked? Must be dragging.
-                if self.mouse_state.clicked {
-                    self.handle_resizing_horizontal(x, right_side);
-                }
+                self.handle_resizing_horizontal(x, right_side);
             }
             InteractionMode::ResizingVertical { bottom_side: _ } => {
                 self.handle_interaction_selecting(x, y);
