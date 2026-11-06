@@ -288,14 +288,16 @@ impl AppState {
                 y1: (selected_layer.position.1 + selected_layer.height) * self.dpr,
             };
             if edge.contains(point) {
-                self.mouse_state.interaction_mode =
-                    InteractionMode::ResizingHorizontal { right_side: false };
-
                 // Change icon in frontend
                 let event = DesignEvent::MouseCursorChanged {
                     cursor: MouseCursors::ResizeHorizontal,
                 };
                 self.emit(event);
+
+                if self.mouse_state.clicked {
+                    self.mouse_state.interaction_mode =
+                        InteractionMode::ResizingHorizontal { right_side: false };
+                }
                 return;
             }
 
@@ -307,14 +309,16 @@ impl AppState {
                 y1: (selected_layer.position.1 + selected_layer.height) * self.dpr,
             };
             if edge.contains(point) {
-                self.mouse_state.interaction_mode =
-                    InteractionMode::ResizingHorizontal { right_side: true };
-
                 // Change icon in frontend
                 let event = DesignEvent::MouseCursorChanged {
                     cursor: MouseCursors::ResizeHorizontal,
                 };
                 self.emit(event);
+
+                if self.mouse_state.clicked {
+                    self.mouse_state.interaction_mode =
+                        InteractionMode::ResizingHorizontal { right_side: true };
+                }
                 return;
             }
 
@@ -326,14 +330,17 @@ impl AppState {
                 y1: (selected_layer.position.1 + bleed) * self.dpr,
             };
             if edge.contains(point) {
-                self.mouse_state.interaction_mode =
-                    InteractionMode::ResizingVertical { bottom_side: false };
-
                 // Change icon in frontend
                 let event = DesignEvent::MouseCursorChanged {
                     cursor: MouseCursors::ResizeVertical,
                 };
                 self.emit(event);
+
+                if self.mouse_state.clicked {
+                    self.mouse_state.interaction_mode =
+                        InteractionMode::ResizingVertical { bottom_side: false };
+                }
+
                 return;
             }
 
@@ -345,14 +352,16 @@ impl AppState {
                 y1: (selected_layer.position.1 + selected_layer.height + bleed) * self.dpr,
             };
             if edge.contains(point) {
-                self.mouse_state.interaction_mode =
-                    InteractionMode::ResizingVertical { bottom_side: true };
-
                 // Change icon in frontend
                 let event = DesignEvent::MouseCursorChanged {
                     cursor: MouseCursors::ResizeVertical,
                 };
                 self.emit(event);
+
+                if self.mouse_state.clicked {
+                    self.mouse_state.interaction_mode =
+                        InteractionMode::ResizingVertical { bottom_side: true };
+                }
                 return;
             }
 
@@ -370,7 +379,7 @@ impl AppState {
 
     fn handle_resizing_horizontal(&mut self, x: f64, right_side: bool) {
         if let Some(selected_layer) = self.layers_service.layers.get_mutable_selected_layer() {
-            let distance_x = x - self.mouse_state.last_position.0;
+            let distance_x = x - self.mouse_state.last_position.0 / self.dpr;
 
             // Right side? Just increase width.
             // We can assume user
@@ -426,11 +435,6 @@ impl AppState {
                 }
             }
             InteractionMode::ResizingHorizontal { right_side } => {
-                // Not clicked? User must be hovering
-                if !self.mouse_state.clicked {
-                    self.handle_interaction_selecting(x, y);
-                }
-
                 // Object is selected and we're clicked? Must be dragging.
                 if self.mouse_state.clicked {
                     self.handle_resizing_horizontal(x, right_side);
