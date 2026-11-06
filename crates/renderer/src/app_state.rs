@@ -162,59 +162,46 @@ impl AppState {
 
             // Add box corners
             // Top left
-            let top_left_x = (selected_layer.position.0 - CORNER_SIZE / 2.0) * self.dpr;
-            let top_left_y = (selected_layer.position.1 - CORNER_SIZE / 2.0) * self.dpr;
+            let corner_size = CORNER_SIZE * self.dpr;
+            let corner_padding = CORNER_SIZE / 2.0;
+            let top_left_x = (selected_layer.position.0 - corner_padding) * self.dpr;
+            let top_left_y = (selected_layer.position.1 - corner_padding) * self.dpr;
             let top_left_corner = Rect {
                 x0: top_left_x,
                 y0: top_left_y,
-                x1: top_left_x + (CORNER_SIZE * self.dpr),
-                y1: top_left_y + (CORNER_SIZE * self.dpr),
+                x1: top_left_x + corner_size,
+                y1: top_left_y + corner_size,
             };
-            scene.set_paint(get_palette_color(AppColors::CanvasBG));
-            scene.fill_rect(&top_left_corner);
-            scene.set_paint(get_palette_color(AppColors::Primary));
-            scene.stroke_rect(&top_left_corner);
+            draw_corner(&mut scene, &top_left_corner);
 
             // Top Right
-            let top_right_x =
-                (selected_layer.position.0 + selected_layer.width - CORNER_SIZE / 2.0) * self.dpr;
-            let top_right_y = (selected_layer.position.1 - CORNER_SIZE / 2.0) * self.dpr;
+            let top_right_x = top_left_x + (selected_layer.width * self.dpr);
             let top_right_corner = Rect {
                 x0: top_right_x,
-                y0: top_right_y,
-                x1: top_right_x + (CORNER_SIZE * self.dpr),
-                y1: top_right_y + (CORNER_SIZE * self.dpr),
+                y0: top_left_y,
+                x1: top_right_x + corner_size,
+                y1: top_left_y + corner_size,
             };
-            scene.set_paint(get_palette_color(AppColors::CanvasBG));
-            scene.fill_rect(&top_right_corner);
-            scene.set_paint(get_palette_color(AppColors::Primary));
-            scene.stroke_rect(&top_right_corner);
+            draw_corner(&mut scene, &top_right_corner);
 
             // Bottom left
-            let bottom_left_y =
-                (selected_layer.position.1 + selected_layer.height - CORNER_SIZE / 2.0) * self.dpr;
+            let bottom_left_y = top_left_y + (selected_layer.height * self.dpr);
             let bottom_left_corner = Rect {
                 x0: top_left_x,
                 y0: bottom_left_y,
-                x1: top_left_x + (CORNER_SIZE * self.dpr),
-                y1: bottom_left_y + (CORNER_SIZE * self.dpr),
+                x1: top_left_x + corner_size,
+                y1: bottom_left_y + corner_size,
             };
-            scene.set_paint(get_palette_color(AppColors::CanvasBG));
-            scene.fill_rect(&bottom_left_corner);
-            scene.set_paint(get_palette_color(AppColors::Primary));
-            scene.stroke_rect(&bottom_left_corner);
+            draw_corner(&mut scene, &bottom_left_corner);
 
             // Bottom right
             let bottom_right_corner = Rect {
                 x0: top_right_x,
                 y0: bottom_left_y,
-                x1: top_right_x + (CORNER_SIZE * self.dpr),
-                y1: bottom_left_y + (CORNER_SIZE * self.dpr),
+                x1: top_right_x + corner_size,
+                y1: bottom_left_y + corner_size,
             };
-            scene.set_paint(get_palette_color(AppColors::CanvasBG));
-            scene.fill_rect(&bottom_right_corner);
-            scene.set_paint(get_palette_color(AppColors::Primary));
-            scene.stroke_rect(&bottom_right_corner);
+            draw_corner(&mut scene, &bottom_right_corner);
         }
 
         scene
@@ -362,4 +349,12 @@ fn convert_mouse_to_canvas_position(
     let x = ((mouse_x - rect.left()) / width).clamp(0.0, 1.0);
     let y = ((mouse_y - rect.top()) / height).clamp(0.0, 1.0);
     (x * canvas.width() as f64, y * canvas.height() as f64)
+}
+
+// Drawing functions
+fn draw_corner(scene: &mut Scene, rect: &Rect) {
+    scene.set_paint(get_palette_color(AppColors::White));
+    scene.fill_rect(&rect);
+    scene.set_paint(get_palette_color(AppColors::Primary));
+    scene.stroke_rect(&rect);
 }
