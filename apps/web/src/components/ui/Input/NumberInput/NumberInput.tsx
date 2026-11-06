@@ -105,7 +105,6 @@ const NumberInput = ({
 
   // Changed default value externally? We should override changes.
   useEffect(() => {
-    console.log("updating input", defaultValue);
     setValue(defaultValue);
   }, [defaultValue]);
 
