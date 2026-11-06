@@ -34,8 +34,6 @@ struct DesignEngine {
             wasm_bindgen::closure::Closure<dyn FnMut(js_sys::Array)>,
         )>,
     >,
-    // Communication channel to frontend (also here to drop)
-    frontend_callback: Rc<RefCell<Option<Function>>>,
 }
 
 #[wasm_bindgen]
@@ -52,7 +50,6 @@ impl DesignEngine {
             create_generation: RefCell::new(0),
             listeners: RefCell::new(Vec::new()),
             resize_observer: RefCell::new(None),
-            frontend_callback: Rc::new(RefCell::new(None)),
         })
     }
 
@@ -187,25 +184,15 @@ impl DesignEngine {
     /// Stores a callback from frontend that backend will use to emit events (`DesignEvent`).
     #[wasm_bindgen]
     pub fn setup_communication_callback(&self, callback: Function) -> Result<JsValue, JsError> {
-        match self.frontend_callback.try_borrow_mut() {
-            Ok(mut frontend_callback) => {
-                *frontend_callback = Some(callback);
-                Ok(JsValue::from_bool(true))
-            }
-            Err(_) => Err(JsError::new("Can't set callback, memory is locked")),
-        }
+        self.state
+            .borrow_mut()
+            .setup_communication_callback(callback)
     }
 
     /// Stores a callback from frontend that backend will use to emit events (`DesignEvent`).
     #[wasm_bindgen]
     pub fn stop_communication_callback(&self) -> Result<JsValue, JsError> {
-        match self.frontend_callback.try_borrow_mut() {
-            Ok(mut frontend_callback) => {
-                *frontend_callback = None;
-                Ok(JsValue::from_bool(true))
-            }
-            Err(_) => Err(JsError::new("Can't set callback, memory is locked")),
-        }
+        self.state.borrow_mut().stop_communication_callback()
     }
 
     /// Attaches event listeners to window and canvas for mouse events.
@@ -242,7 +229,6 @@ impl DesignEngine {
         // Mouse down
         {
             let app_state = self.state.clone();
-            let frontend_callback = self.frontend_callback.clone();
             let canvas_target = canvas.clone();
             let canvas = canvas.clone();
 
@@ -256,20 +242,6 @@ impl DesignEngine {
                         event.client_x() as f64,
                         event.client_y() as f64,
                     );
-
-                    if let Some(layer_id) = layer_id {
-                        if let Ok(callback) = frontend_callback.try_borrow_mut().as_deref_mut() {
-                            if let Some(cb) = callback {
-                                let key = layer_id.data().as_ffi();
-                                let serializer =
-                                    Serializer::new().serialize_large_number_types_as_bigints(true);
-                                let event = DesignEvent::LayerSelected { layer_id: key };
-                                if let Ok(js_event) = event.serialize(&serializer) {
-                                    cb.call1(&JsValue::NULL, &js_event);
-                                }
-                            }
-                        }
-                    };
                 });
             self.listeners.borrow_mut().push(mouse_move_listener);
         }

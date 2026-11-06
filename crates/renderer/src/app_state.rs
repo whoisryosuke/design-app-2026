@@ -1,4 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
 use serde::Serialize;
+use serde_wasm_bindgen::Serializer;
 use slotmap::{DefaultKey, Key, KeyData, SlotMap};
 use vello_gpu::{
     Scene,
@@ -7,12 +10,15 @@ use vello_gpu::{
     peniko::Color,
 };
 use wasm_bindgen::{JsError, JsValue};
-use web_sys::{DomRect, HtmlCanvasElement};
+use web_sys::{DomRect, HtmlCanvasElement, js_sys::Function};
 
-use crate::design::layer::{
-    layer::{DraftLayer, Layer},
-    layers::Layers,
-    layers_service::LayersService,
+use crate::{
+    command_queue::design_event::DesignEvent,
+    design::layer::{
+        layer::{DraftLayer, Layer},
+        layers::Layers,
+        layers_service::LayersService,
+    },
 };
 
 #[derive(Default, Serialize, Clone)]
@@ -38,6 +44,10 @@ pub struct AppState {
     /// Resolution of user's device ("device pixel ratio")
     dpr: f64,
     mouse_state: MouseState,
+
+    // Communication channel to frontend (also here to drop)
+    #[serde(skip)]
+    frontend_callback: Rc<RefCell<Option<Function>>>,
 }
 
 impl AppState {
@@ -49,6 +59,7 @@ impl AppState {
             height: height.unwrap_or(0),
             dpr: 1.0,
             mouse_state: MouseState::default(),
+            frontend_callback: Rc::new(RefCell::new(None)),
         }
     }
 
@@ -121,6 +132,9 @@ impl AppState {
         self.build_scene(timestamp)
     }
 
+    /// Handle mouse down (aka click) on canvas.
+    /// Updates local mouse position state, but also handles logic like
+    /// selecting a layer or starting a drag sequence.
     pub fn handle_mouse_down(
         &mut self,
         canvas: &HtmlCanvasElement,
@@ -134,15 +148,23 @@ impl AppState {
         self.mouse_state.last_position = (x, y);
 
         // Check if any layers can be selected
-        let layer_id = self.find_layer_by_position(x, y);
+        let layer_id_result = self.find_layer_by_position(x, y);
 
-        // Selected a layer? Let system know new interaction mode
-        match layer_id {
-            Some(_) => self.mouse_state.interaction_mode = InteractionMode::Selecting,
+        // Selected a layer? Change interaction mode + emit event to UI
+        match layer_id_result {
+            Some(layer_id) => {
+                // Let frontend know layer was selected
+                let key = layer_id.data().as_ffi();
+                let event = DesignEvent::LayerSelected { layer_id: key };
+                self.emit(event);
+
+                // Let system know new interaction mode
+                self.mouse_state.interaction_mode = InteractionMode::Selecting;
+            }
             None => self.mouse_state.interaction_mode = InteractionMode::Idle,
         }
 
-        layer_id
+        layer_id_result
     }
 
     pub fn handle_mouse_up(&mut self) {
@@ -151,6 +173,8 @@ impl AppState {
         self.mouse_state.interaction_mode = InteractionMode::Idle;
     }
 
+    /// Handle mouse move on canvas.
+    /// Also handles dragging of layers based on `InteractionMode`.
     pub fn handle_mouse_move(&mut self, canvas: &HtmlCanvasElement, x: f64, y: f64) {
         let (x, y) = convert_mouse_to_canvas_position(&canvas, x, y);
 
@@ -175,6 +199,10 @@ impl AppState {
         self.mouse_state.last_position = (x, y);
     }
 
+    /// Finds layer using position data. Returns layer or `None`.
+    /// Assumes the position data is scaled to resolution (like mouse position).
+    /// Don't use this to measure a CSS-based coordinated to find a layer
+    /// (e.g. finding a layer using it's own position -- that's scaled to CSS).
     fn find_layer_by_position(&mut self, x: f64, y: f64) -> Option<DefaultKey> {
         // We get mouse coordinates scaled to resolution
         // so we convert it to "CSS" coordinates (same as design data)
@@ -185,6 +213,39 @@ impl AppState {
             return Some(key);
         }
         return None;
+    }
+
+    pub fn setup_communication_callback(&self, callback: Function) -> Result<JsValue, JsError> {
+        match self.frontend_callback.try_borrow_mut() {
+            Ok(mut frontend_callback) => {
+                *frontend_callback = Some(callback);
+                Ok(JsValue::from_bool(true))
+            }
+            Err(_) => Err(JsError::new("Can't set callback, memory is locked")),
+        }
+    }
+
+    pub fn stop_communication_callback(&self) -> Result<JsValue, JsError> {
+        match self.frontend_callback.try_borrow_mut() {
+            Ok(mut frontend_callback) => {
+                *frontend_callback = None;
+                Ok(JsValue::from_bool(true))
+            }
+            Err(_) => Err(JsError::new("Can't remove callback, memory is locked")),
+        }
+    }
+
+    /// Emit events (`DesignEvent`) to the UI.
+    /// Keeps the UI in sync with changes in backend.
+    fn emit(&self, event: DesignEvent) {
+        if let Ok(callback) = self.frontend_callback.try_borrow_mut().as_deref_mut() {
+            if let Some(cb) = callback {
+                let serializer = Serializer::new().serialize_large_number_types_as_bigints(true);
+                if let Ok(js_event) = event.serialize(&serializer) {
+                    cb.call1(&JsValue::NULL, &js_event);
+                }
+            }
+        }
     }
 }
 
