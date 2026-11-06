@@ -42,7 +42,9 @@ const LayersList = (props: Props) => {
     const y = Math.round(Math.random() * 420);
     const draftLayer: DraftLayer = {
       name: "Test",
-      kind: "Rect",
+      kind: {
+        type: "Rect",
+      },
       position: [x, y],
       width,
       height,

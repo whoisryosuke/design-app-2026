@@ -55,7 +55,7 @@ const LayerListItem = ({
     <button className={cx(text(), itemClass)} onClick={handleClick} {...props}>
       <BiRectangle />
       <span>
-        {layer.name} ({layer.kind.toString()})
+        {layer.name} ({layer.kind.type})
       </span>
     </button>
   );

@@ -59,6 +59,7 @@ pub enum FrameLayout {
 
 #[derive(Serialize, Deserialize, Clone, TS)]
 #[ts(export)]
+#[serde(tag = "type", content = "data")]
 pub enum LayerKind {
     Group,
     Frame { layout: FrameLayout },

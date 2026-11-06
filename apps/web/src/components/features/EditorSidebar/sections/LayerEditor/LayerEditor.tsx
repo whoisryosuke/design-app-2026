@@ -43,7 +43,7 @@ const LayerEditor = ({ layer, ...props }: Props) => {
 
   return (
     <Stack minWidth="300px" p={3}>
-      <Heading as="h5">{layer.kind.toString()}</Heading>
+      <Heading as="h5">{layer.kind.type}</Heading>
       <Heading as="h6" className={headingStyle}>
         Position
       </Heading>
