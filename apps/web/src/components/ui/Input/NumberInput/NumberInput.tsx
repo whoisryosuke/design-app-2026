@@ -1,4 +1,5 @@
 import React, {
+  useEffect,
   useRef,
   useState,
   type ChangeEventHandler,
@@ -30,6 +31,17 @@ const inputStyle = sva({
     },
     input: {
       fontFamily: "mono",
+      "&::-webkit-outer-spin-button": {
+        WebkitAppearance: "none",
+        margin: 0,
+      },
+      "&::-webkit-inner-spin-button": {
+        WebkitAppearance: "none",
+        margin: 0,
+      },
+      "&[type=number]": {
+        appearance: "textfield",
+      },
     },
   },
 });
@@ -42,6 +54,8 @@ type Props = {
   icon?: ReactElement;
   defaultValue: InputValue;
   onSubmit: (value: InputValue) => InputValue;
+  step?: number;
+  min?: number;
 };
 
 const NumberInput = ({
@@ -50,6 +64,8 @@ const NumberInput = ({
   name,
   defaultValue,
   onSubmit,
+  step = 1,
+  min,
   ...props
 }: Props) => {
   const [value, setValue] = useState(defaultValue);
@@ -87,6 +103,12 @@ const NumberInput = ({
     isEditing.current = false;
   };
 
+  // Changed default value externally? We should override changes.
+  useEffect(() => {
+    console.log("updating input", defaultValue);
+    setValue(defaultValue);
+  }, [defaultValue]);
+
   return (
     <Stack className={classes.container} {...props}>
       {label && (
@@ -98,7 +120,10 @@ const NumberInput = ({
         {icon}
         <input
           ref={inputEl}
+          type="number"
           className={classes.input}
+          step="0.01"
+          min={min}
           name={name}
           value={value}
           onChange={onChange}
