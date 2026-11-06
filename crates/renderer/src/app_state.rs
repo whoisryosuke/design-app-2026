@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use serde::Serialize;
 use serde_wasm_bindgen::Serializer;
@@ -37,6 +37,39 @@ pub struct MouseState {
 }
 
 #[derive(Serialize, Clone)]
+#[repr(usize)]
+pub enum AppColors {
+    Primary = 0,
+    White,
+    Black,
+    CanvasBG,
+    // Not a color. Required for array allocation in `PALETTE`.
+    Count,
+}
+
+// Hardcoded color palette for Vello rendering.
+// Global, zero-allocation lookup table using enum (cast to usize) as index.
+static PALETTE: [Color; AppColors::Count as usize] = {
+    // We have to initialize via a trick since we can't index by enum directly in const arrays easily.
+    // We use a `Count` option that always sits at end of enum, this way it represents array size
+    // (since enum starts at 0, adding 1 extra option makes it a true array length).
+    let mut storage = [Color::TRANSPARENT; AppColors::Count as usize];
+    storage[AppColors::Primary as usize] = Color::from_rgba8(12, 140, 233, 255);
+    storage[AppColors::Black as usize] = Color::from_rgba8(100, 100, 100, 255);
+    storage[AppColors::White as usize] = Color::from_rgba8(255, 255, 255, 255);
+    storage[AppColors::CanvasBG as usize] = Color::from_rgba8(229, 229, 229, 255);
+    storage
+};
+
+// Grabs a `Color` from the global palette cache based on the `AppColor` enum.
+fn get_palette_color(name: AppColors) -> Color {
+    // Converts enum to usize to index array
+    PALETTE[name as usize]
+}
+
+const CORNER_SIZE: f64 = 10.0;
+
+#[derive(Serialize, Clone)]
 pub struct AppState {
     pub layers_service: LayersService,
     width: u16,
@@ -53,6 +86,7 @@ pub struct AppState {
 impl AppState {
     pub fn new(width: Option<u16>, height: Option<u16>) -> Self {
         let layers_service = LayersService::new();
+
         Self {
             layers_service,
             width: width.unwrap_or(0),
@@ -77,7 +111,7 @@ impl AppState {
         let mut scene = Scene::new(self.width, self.height);
 
         // Background
-        scene.set_paint(css::DIM_GRAY);
+        scene.set_paint(get_palette_color(AppColors::CanvasBG));
         scene.fill_rect(&Rect::new(0.0, 0.0, self.width as f64, self.height as f64));
 
         // Filled circle
@@ -116,13 +150,71 @@ impl AppState {
         // Draw selection
         if let Some(selected_layer) = self.layers_service.layers.get_selected_layer() {
             scene.set_stroke(Stroke::new(3.0));
-            scene.set_paint(css::BLUE);
+            scene.set_paint(get_palette_color(AppColors::Primary));
+
+            // Stroke selected item
             scene.stroke_rect(&Rect {
                 x0: selected_layer.position.0 * self.dpr,
                 y0: selected_layer.position.1 * self.dpr,
                 x1: (selected_layer.position.0 + selected_layer.width) * self.dpr,
                 y1: (selected_layer.position.1 + selected_layer.height) * self.dpr,
             });
+
+            // Add box corners
+            // Top left
+            let top_left_x = (selected_layer.position.0 - CORNER_SIZE / 2.0) * self.dpr;
+            let top_left_y = (selected_layer.position.1 - CORNER_SIZE / 2.0) * self.dpr;
+            let top_left_corner = Rect {
+                x0: top_left_x,
+                y0: top_left_y,
+                x1: top_left_x + (CORNER_SIZE * self.dpr),
+                y1: top_left_y + (CORNER_SIZE * self.dpr),
+            };
+            scene.set_paint(get_palette_color(AppColors::CanvasBG));
+            scene.fill_rect(&top_left_corner);
+            scene.set_paint(get_palette_color(AppColors::Primary));
+            scene.stroke_rect(&top_left_corner);
+
+            // Top Right
+            let top_right_x =
+                (selected_layer.position.0 + selected_layer.width - CORNER_SIZE / 2.0) * self.dpr;
+            let top_right_y = (selected_layer.position.1 - CORNER_SIZE / 2.0) * self.dpr;
+            let top_right_corner = Rect {
+                x0: top_right_x,
+                y0: top_right_y,
+                x1: top_right_x + (CORNER_SIZE * self.dpr),
+                y1: top_right_y + (CORNER_SIZE * self.dpr),
+            };
+            scene.set_paint(get_palette_color(AppColors::CanvasBG));
+            scene.fill_rect(&top_right_corner);
+            scene.set_paint(get_palette_color(AppColors::Primary));
+            scene.stroke_rect(&top_right_corner);
+
+            // Bottom left
+            let bottom_left_y =
+                (selected_layer.position.1 + selected_layer.height - CORNER_SIZE / 2.0) * self.dpr;
+            let bottom_left_corner = Rect {
+                x0: top_left_x,
+                y0: bottom_left_y,
+                x1: top_left_x + (CORNER_SIZE * self.dpr),
+                y1: bottom_left_y + (CORNER_SIZE * self.dpr),
+            };
+            scene.set_paint(get_palette_color(AppColors::CanvasBG));
+            scene.fill_rect(&bottom_left_corner);
+            scene.set_paint(get_palette_color(AppColors::Primary));
+            scene.stroke_rect(&bottom_left_corner);
+
+            // Bottom right
+            let bottom_right_corner = Rect {
+                x0: top_right_x,
+                y0: bottom_left_y,
+                x1: top_right_x + (CORNER_SIZE * self.dpr),
+                y1: bottom_left_y + (CORNER_SIZE * self.dpr),
+            };
+            scene.set_paint(get_palette_color(AppColors::CanvasBG));
+            scene.fill_rect(&bottom_right_corner);
+            scene.set_paint(get_palette_color(AppColors::Primary));
+            scene.stroke_rect(&bottom_right_corner);
         }
 
         scene
