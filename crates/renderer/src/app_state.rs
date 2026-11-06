@@ -366,11 +366,27 @@ impl AppState {
                 self.emit(event);
             }
         }
+    }
 
-        // Object is selected and we're clicked? Must be dragging.
-        if self.mouse_state.clicked {
-            self.mouse_state.interaction_mode = InteractionMode::Dragging;
-            return;
+    fn handle_resizing_horizontal(&mut self, x: f64, right_side: bool) {
+        if let Some(selected_layer) = self.layers_service.layers.get_mutable_selected_layer() {
+            let distance_x = x - self.mouse_state.last_position.0;
+
+            // Right side? Just increase width.
+            // We can assume user
+            if right_side {
+                selected_layer.width += distance_x;
+                return;
+            }
+
+            // Otherwise it's left side, which is more complex.
+            // We need to increase width while simultaneously moving object
+            // to simulate it growing in place.
+            // @TODO: Maybe in future we store layers like a `Rect` - and derive width when needed?
+            selected_layer.position.0 += distance_x;
+            // This means that dragging left on left side increase size, which means
+            // distance needs to be reversed (e.g. negative distance = growing).
+            selected_layer.width -= distance_x;
         }
     }
 
@@ -384,7 +400,14 @@ impl AppState {
             // Draw selection box
             InteractionMode::Idle => self.handle_interaction_selecting(x, y),
             // Enable dragging/movement of layer
-            InteractionMode::Selecting => self.handle_interaction_selecting(x, y),
+            InteractionMode::Selecting => {
+                self.handle_interaction_selecting(x, y);
+
+                // Object is selected and we're clicked? Must be dragging.
+                if self.mouse_state.clicked {
+                    self.mouse_state.interaction_mode = InteractionMode::Dragging;
+                }
+            }
             // Move layer/object
             InteractionMode::Dragging => {
                 // Get distance of drag (aka "delta") and remove resolution (aka scale to CSS-space)
@@ -402,8 +425,16 @@ impl AppState {
                     self.emit(event);
                 }
             }
-            InteractionMode::ResizingHorizontal { right_side: _ } => {
-                self.handle_interaction_selecting(x, y);
+            InteractionMode::ResizingHorizontal { right_side } => {
+                // Not clicked? User must be hovering
+                if !self.mouse_state.clicked {
+                    self.handle_interaction_selecting(x, y);
+                }
+
+                // Object is selected and we're clicked? Must be dragging.
+                if self.mouse_state.clicked {
+                    self.handle_resizing_horizontal(x, right_side);
+                }
             }
             InteractionMode::ResizingVertical { bottom_side: _ } => {
                 self.handle_interaction_selecting(x, y);

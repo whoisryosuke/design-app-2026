@@ -62,6 +62,10 @@ impl Layers {
         self.layers.get(self.selected_layer)
     }
 
+    pub fn get_mutable_selected_layer(&mut self) -> Option<&mut Layer> {
+        self.layers.get_mut(self.selected_layer)
+    }
+
     /// Provides a list of layers filtered by parent ID for backend.
     /// For top level layers, provide `None` as `parent` parameter.
     pub fn get_layers_by_parent(&self, parent: Option<DefaultKey>) -> Vec<(DefaultKey, &Layer)> {
