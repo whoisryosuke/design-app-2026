@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::design::layer::layer::UpdateLayer;
+
 #[derive(Default, Serialize, Clone, TS)]
 #[ts(export)]
 pub enum MouseCursors {
@@ -21,5 +23,6 @@ pub enum MouseCursors {
 pub enum DesignEvent {
     LayerSelected { layer_id: u64 },
     LayerMoved { layer_id: u64, position: (f64, f64) },
+    LayerUpdated { layer_id: u64, data: UpdateLayer },
     MouseCursorChanged { cursor: MouseCursors },
 }

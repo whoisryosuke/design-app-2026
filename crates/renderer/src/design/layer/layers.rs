@@ -18,7 +18,7 @@ pub struct DragLayerUpdate {
 #[derive(Serialize, Clone)]
 pub struct Layers {
     layers: SlotMap<DefaultKey, Layer>,
-    selected_layer: DefaultKey,
+    selected_layer: Option<DefaultKey>,
 }
 
 impl Layers {
@@ -51,19 +51,25 @@ impl Layers {
     }
 
     pub fn select_layer(&mut self, layer_key: DefaultKey) {
-        self.selected_layer = layer_key;
+        self.selected_layer = Some(layer_key);
     }
 
-    pub fn get_selected_layer_id(&self) -> DefaultKey {
+    pub fn get_selected_layer_id(&self) -> Option<DefaultKey> {
         self.selected_layer
     }
 
     pub fn get_selected_layer(&self) -> Option<&Layer> {
-        self.layers.get(self.selected_layer)
+        if let Some(layer_id) = self.selected_layer {
+            return self.layers.get(layer_id);
+        }
+        None
     }
 
     pub fn get_mutable_selected_layer(&mut self) -> Option<&mut Layer> {
-        self.layers.get_mut(self.selected_layer)
+        if let Some(layer_id) = self.selected_layer {
+            return self.layers.get_mut(layer_id);
+        }
+        None
     }
 
     /// Provides a list of layers filtered by parent ID for backend.
@@ -124,21 +130,23 @@ impl Layers {
     }
 
     pub fn drag_selected_layer(&mut self, x: f64, y: f64) -> Option<DragLayerUpdate> {
-        let layer = self
-            .layers
-            .iter_mut()
-            .find(|(layer_id, _)| *layer_id == self.selected_layer);
+        if let Some(selected_layer_id) = self.selected_layer {
+            let layer = self
+                .layers
+                .iter_mut()
+                .find(|(layer_id, _)| *layer_id == selected_layer_id);
 
-        if let Some((key, layer_data)) = layer {
-            let new_x = layer_data.position.0 + x;
-            let new_y = layer_data.position.1 + y;
-            layer_data.position.0 = new_x;
-            layer_data.position.1 = new_y;
+            if let Some((key, layer_data)) = layer {
+                let new_x = layer_data.position.0 + x;
+                let new_y = layer_data.position.1 + y;
+                layer_data.position.0 = new_x;
+                layer_data.position.1 = new_y;
 
-            return Some(DragLayerUpdate {
-                layer_id: convert_default_key_to_u64(key),
-                position: (new_x, new_y),
-            });
+                return Some(DragLayerUpdate {
+                    layer_id: convert_default_key_to_u64(key),
+                    position: (new_x, new_y),
+                });
+            }
         }
         None
     }

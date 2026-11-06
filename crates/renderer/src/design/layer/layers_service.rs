@@ -1,6 +1,6 @@
 use crate::design::layer::{
     layer::{DraftLayer, LayerListResponse, UpdateLayer},
-    layer_utils::convert_u64_to_default_key,
+    layer_utils::{convert_default_key_to_u64, convert_u64_to_default_key},
     layers::{DragLayerUpdate, Layers},
 };
 use serde::Serialize;
@@ -91,5 +91,14 @@ impl LayersService {
 
     pub fn drag_selected_layer(&mut self, x: f64, y: f64) -> Option<DragLayerUpdate> {
         self.layers.drag_selected_layer(x, y)
+    }
+
+    pub fn get_selected_layer_id(&self) -> Option<u64> {
+        if let Some(backend_key) = self.layers.get_selected_layer_id() {
+            let frontend_key = convert_default_key_to_u64(backend_key);
+
+            return Some(frontend_key);
+        }
+        None
     }
 }

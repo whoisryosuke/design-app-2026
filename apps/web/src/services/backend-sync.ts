@@ -1,4 +1,4 @@
-import type { DesignEvent } from "design-app-renderer-types";
+import type { DesignEvent, UpdateLayer } from "design-app-renderer-types";
 import type { DesignEventPayload } from "../utils/types";
 import { store } from "../store/store";
 import {
@@ -21,6 +21,21 @@ function handleMovedLayer(data: DesignEventPayload<"LayerMoved">) {
   );
 }
 
+// Update layer when changed in any way (name, position, etc -- see: `UpdateLayer`)
+function handleUpdatedLayer(data: DesignEventPayload<"LayerUpdated">) {
+  // Rust requires an object with `Option<>` props, which translates to `undefined` when `None`.
+  // We create a new object of actual updates, stripping out undefined options.
+  const updates = Object.fromEntries(
+    Object.entries(data.data).filter(([_, value]) => value !== undefined),
+  );
+  console.log("updating layer data", data, updates);
+  store.set(layersAtom, (prevState) =>
+    prevState.map((layer) =>
+      layer.id == data.layer_id ? { ...layer, ...updates } : layer,
+    ),
+  );
+}
+
 // Update layer position when moved on canvas
 function handleMouseCursorChange(
   data: DesignEventPayload<"MouseCursorChanged">,
@@ -36,6 +51,8 @@ export function handleBackendEvent(event: DesignEvent) {
       return handleMovedLayer(event.payload);
     case "MouseCursorChanged":
       return handleMouseCursorChange(event.payload);
+    case "LayerUpdated":
+      return handleUpdatedLayer(event.payload);
     default:
   }
 }

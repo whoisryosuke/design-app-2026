@@ -67,7 +67,7 @@ pub enum LayerKind {
     Text(String),
 }
 
-#[derive(Serialize, Deserialize, Clone, TS)]
+#[derive(Default, Serialize, Deserialize, Clone, TS)]
 #[ts(export)]
 pub struct UpdateLayer {
     pub name: Option<String>,

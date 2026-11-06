@@ -16,11 +16,20 @@ use web_sys::{DomRect, HtmlCanvasElement, js_sys::Function};
 use crate::{
     command_queue::design_event::{DesignEvent, MouseCursors},
     design::layer::{
-        layer::{DraftLayer, Layer},
+        layer::{DraftLayer, Layer, UpdateLayer},
         layers::Layers,
         layers_service::LayersService,
     },
 };
+
+#[derive(Default, Serialize, PartialEq, Clone)]
+pub enum ObjectCorner {
+    #[default]
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+}
 
 #[derive(Default, Serialize, PartialEq, Clone)]
 pub enum InteractionMode {
@@ -29,20 +38,30 @@ pub enum InteractionMode {
     Selecting,
     Dragging,
     ResizingHorizontal {
+        // Right side of object? If not, left.
         right_side: bool,
     },
     ResizingVertical {
+        // Bottom? If not, top.
         bottom_side: bool,
     },
-    ResizingCorner,
-    Rotating,
+    ResizingCorner {
+        // Bottom right? If not, it's top left.
+        corner: ObjectCorner,
+    },
+    Rotating {
+        corner: ObjectCorner,
+    },
 }
 
 #[derive(Default, Serialize, Clone)]
 pub struct MouseState {
     pub clicked: bool,
     pub last_position: (f64, f64),
+    // When user is interacting (aka "click"/"press"), what "mode" are we in
     pub interaction_mode: InteractionMode,
+    // When user is hovering over canvas, what "mode" are we in
+    // We share `InteractionMode` here because of how much overlap there is, but we don't use all of them.
     pub hover_mode: InteractionMode,
 }
 
@@ -225,6 +244,7 @@ impl AppState {
     /// Handle mouse down (aka click) on canvas.
     /// Updates local mouse position state, but also handles logic like
     /// selecting a layer or starting a drag sequence.
+    /// Returns a selected layer ID if detected.
     pub fn handle_mouse_down(
         &mut self,
         canvas: &HtmlCanvasElement,
@@ -237,16 +257,17 @@ impl AppState {
         let (x, y) = convert_mouse_to_canvas_position(&canvas, x, y);
         self.mouse_state.last_position = (x, y);
 
-        // Check if any layers can be selected
-        let layer_id_result = self.find_layer_by_position(x, y);
-
+        // User clicked? Change interaction mode based on their hover mode.
+        // For example, if user is hovering over resize area, we switch to that.
         match self.mouse_state.hover_mode {
             InteractionMode::Idle => {
+                // Check if any layers can be selected
+                let layer_id_result = self.find_layer_by_position(x, y);
                 // Selected a layer? Change interaction mode + emit event to UI
                 match layer_id_result {
                     Some(layer_id) => {
                         // @TODO: Check if user is clicking selected layer twice within
-                        // short time to activate editing mode
+                        // short time to activate editing mode. Maybe use `Selecting` branch?
 
                         // Let frontend know layer was selected
                         let key = layer_id.data().as_ffi();
@@ -265,9 +286,22 @@ impl AppState {
                 self.mouse_state.interaction_mode =
                     InteractionMode::ResizingHorizontal { right_side };
             }
-            InteractionMode::ResizingVertical { bottom_side } => todo!(),
-            InteractionMode::ResizingCorner => todo!(),
-            InteractionMode::Rotating => todo!(),
+            InteractionMode::ResizingVertical { bottom_side } => {
+                self.mouse_state.interaction_mode =
+                    InteractionMode::ResizingVertical { bottom_side };
+            }
+            InteractionMode::ResizingCorner { ref corner } => {
+                self.mouse_state.interaction_mode = InteractionMode::ResizingCorner {
+                    corner: corner.clone(),
+                };
+            }
+            InteractionMode::Rotating { ref corner } => {
+                self.mouse_state.interaction_mode = InteractionMode::Rotating {
+                    corner: corner.clone(),
+                };
+            }
+
+            // Selecting and Dragging omitted.
             _ => {}
         }
 
@@ -288,10 +322,8 @@ impl AppState {
     }
 
     fn handle_interaction_selecting(&mut self, x: f64, y: f64) {
-        // Where are we on object (e.g. sides)? Should we change interaction mode?
+        // Where are we on object (e.g. sides)? Should we change hover mode?
         if let Some(selected_layer) = self.layers_service.layers.get_selected_layer() {
-            // let distance_x = x - (selected_layer.position.0 * self.dpr);
-            // let distance_y = y - (selected_layer.position.1 * self.dpr);
             let point = Point::new(x, y);
 
             // We draw invisible hit boxes around selected object and check if the
@@ -387,14 +419,25 @@ impl AppState {
         }
     }
 
+    fn send_design_event_layer_updated(&self, layer_id: u64, data: UpdateLayer) {
+        let event = DesignEvent::LayerUpdated { layer_id, data };
+        self.emit(event);
+    }
+
     fn handle_resizing_horizontal(&mut self, x: f64, right_side: bool) {
+        let layer_id = self.layers_service.get_selected_layer_id().unwrap_or(0);
+
         if let Some(selected_layer) = self.layers_service.layers.get_mutable_selected_layer() {
             let distance_x = (x - self.mouse_state.last_position.0) / self.dpr;
 
+            let mut event_data = UpdateLayer::default();
+
             // Right side? Just increase width.
-            // We can assume user
             if right_side {
                 selected_layer.width += distance_x;
+
+                event_data.width = Some(selected_layer.width);
+                self.send_design_event_layer_updated(layer_id, event_data);
                 return;
             }
 
@@ -406,6 +449,43 @@ impl AppState {
             // This means that dragging left on left side increase size, which means
             // distance needs to be reversed (e.g. negative distance = growing).
             selected_layer.width -= distance_x;
+
+            event_data.width = Some(selected_layer.width);
+            event_data.position_x = Some(selected_layer.position.0);
+            self.send_design_event_layer_updated(layer_id, event_data);
+        }
+    }
+
+    fn handle_resizing_vertical(&mut self, y: f64, bottom_side: bool) {
+        let layer_id = self.layers_service.get_selected_layer_id().unwrap_or(0);
+
+        if let Some(selected_layer) = self.layers_service.layers.get_mutable_selected_layer() {
+            let distance_y = (y - self.mouse_state.last_position.1) / self.dpr;
+
+            let mut event_data = UpdateLayer::default();
+
+            // Bottom side? Just increase height.
+            if bottom_side {
+                selected_layer.height += distance_y;
+
+                event_data.height = Some(selected_layer.height);
+                self.send_design_event_layer_updated(layer_id, event_data);
+
+                return;
+            }
+
+            // Otherwise it's left side, which is more complex.
+            // We need to increase width while simultaneously moving object
+            // to simulate it growing in place.
+            // @TODO: Maybe in future we store layers like a `Rect` - and derive width when needed?
+            selected_layer.position.1 += distance_y;
+            // This means that dragging left on left side increase size, which means
+            // distance needs to be reversed (e.g. negative distance = growing).
+            selected_layer.height -= distance_y;
+
+            event_data.height = Some(selected_layer.width);
+            event_data.position_y = Some(selected_layer.position.1);
+            self.send_design_event_layer_updated(layer_id, event_data);
         }
     }
 
@@ -448,11 +528,28 @@ impl AppState {
                 // Object is selected and we're clicked? Must be dragging.
                 self.handle_resizing_horizontal(x, right_side);
             }
-            InteractionMode::ResizingVertical { bottom_side: _ } => {
-                self.handle_interaction_selecting(x, y);
+            InteractionMode::ResizingVertical { bottom_side } => {
+                self.handle_resizing_vertical(y, bottom_side);
             }
-            InteractionMode::ResizingCorner => {}
-            InteractionMode::Rotating => {}
+            InteractionMode::ResizingCorner { ref corner } => match corner {
+                ObjectCorner::TopLeft => {
+                    self.handle_resizing_horizontal(x, false);
+                    self.handle_resizing_vertical(y, false);
+                }
+                ObjectCorner::TopRight => {
+                    self.handle_resizing_horizontal(x, true);
+                    self.handle_resizing_vertical(y, false);
+                }
+                ObjectCorner::BottomLeft => {
+                    self.handle_resizing_horizontal(x, false);
+                    self.handle_resizing_vertical(y, true);
+                }
+                ObjectCorner::BottomRight => {
+                    self.handle_resizing_horizontal(x, true);
+                    self.handle_resizing_vertical(y, true);
+                }
+            },
+            InteractionMode::Rotating { ref corner } => {}
         }
 
         // Update last position last (in case anything needs to use it for delta math)
