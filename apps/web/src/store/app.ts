@@ -1,4 +1,4 @@
-import type { DraftLayer } from "design-app-renderer-types";
+import type { DraftLayer, MouseCursors } from "design-app-renderer-types";
 import { atom } from "jotai";
 
 // The Layer ID provided from Rust backend.
@@ -10,3 +10,4 @@ export type UILayer = DraftLayer & {
 
 export const selectedLayerAtom = atom<LayerId | null>(null);
 export const layersAtom = atom<UILayer[]>([]);
+export const currentMouseCursorAtom = atom<MouseCursors>("Default");

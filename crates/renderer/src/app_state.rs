@@ -1,19 +1,20 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::Serializer;
 use slotmap::{DefaultKey, Key, KeyData, SlotMap};
+use ts_rs::TS;
 use vello_gpu::{
     Scene,
     color::palette::css,
-    kurbo::{Affine, Circle, Rect, RoundedRect, Shape, Stroke},
+    kurbo::{Affine, Circle, Point, Rect, RoundedRect, Shape, Stroke},
     peniko::Color,
 };
 use wasm_bindgen::{JsError, JsValue};
 use web_sys::{DomRect, HtmlCanvasElement, js_sys::Function};
 
 use crate::{
-    command_queue::design_event::DesignEvent,
+    command_queue::design_event::{DesignEvent, MouseCursors},
     design::layer::{
         layer::{DraftLayer, Layer},
         layers::Layers,
@@ -21,12 +22,20 @@ use crate::{
     },
 };
 
-#[derive(Default, Serialize, Clone)]
+#[derive(Default, Serialize, PartialEq, Clone)]
 pub enum InteractionMode {
     #[default]
     Idle,
     Selecting,
     Dragging,
+    ResizingHorizontal {
+        right_side: bool,
+    },
+    ResizingVertical {
+        bottom_side: bool,
+    },
+    ResizingCorner,
+    Rotating,
 }
 
 #[derive(Default, Serialize, Clone)]
@@ -67,6 +76,7 @@ fn get_palette_color(name: AppColors) -> Color {
     PALETTE[name as usize]
 }
 
+const EDGE_INTERACTION_BLEED: f64 = 5.0;
 const CORNER_SIZE: f64 = 10.0;
 
 #[derive(Serialize, Clone)]
@@ -249,7 +259,119 @@ impl AppState {
     pub fn handle_mouse_up(&mut self) {
         self.mouse_state.clicked = false;
         self.mouse_state.last_position = (0.0, 0.0);
-        self.mouse_state.interaction_mode = InteractionMode::Idle;
+
+        // Only reset mouse state if we were in a "action" state.
+        // Idle and selecting
+        if self.mouse_state.interaction_mode != InteractionMode::Idle
+            && self.mouse_state.interaction_mode != InteractionMode::Selecting
+        {
+            self.mouse_state.interaction_mode = InteractionMode::Idle;
+        }
+    }
+
+    fn handle_interaction_selecting(&mut self, x: f64, y: f64) {
+        // Where are we on object (e.g. sides)? Should we change interaction mode?
+        if let Some(selected_layer) = self.layers_service.layers.get_selected_layer() {
+            // let distance_x = x - (selected_layer.position.0 * self.dpr);
+            // let distance_y = y - (selected_layer.position.1 * self.dpr);
+            let point = Point::new(x, y);
+
+            // We draw invisible hit boxes around selected object and check if the
+            // position is within one of them.
+
+            // Left side
+            let bleed = EDGE_INTERACTION_BLEED / 2.0;
+            let edge = Rect {
+                x0: (selected_layer.position.0 - bleed) * self.dpr,
+                y0: selected_layer.position.1 * self.dpr,
+                x1: (selected_layer.position.0 + bleed) * self.dpr,
+                y1: (selected_layer.position.1 + selected_layer.height) * self.dpr,
+            };
+            if edge.contains(point) {
+                self.mouse_state.interaction_mode =
+                    InteractionMode::ResizingHorizontal { right_side: false };
+
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::ResizeHorizontal,
+                };
+                self.emit(event);
+                return;
+            }
+
+            // Right side
+            let edge = Rect {
+                x0: (selected_layer.position.0 + selected_layer.width - bleed) * self.dpr,
+                y0: selected_layer.position.1 * self.dpr,
+                x1: (selected_layer.position.0 + selected_layer.width + bleed) * self.dpr,
+                y1: (selected_layer.position.1 + selected_layer.height) * self.dpr,
+            };
+            if edge.contains(point) {
+                self.mouse_state.interaction_mode =
+                    InteractionMode::ResizingHorizontal { right_side: true };
+
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::ResizeHorizontal,
+                };
+                self.emit(event);
+                return;
+            }
+
+            // Top side
+            let edge = Rect {
+                x0: (selected_layer.position.0) * self.dpr,
+                y0: (selected_layer.position.1 - bleed) * self.dpr,
+                x1: (selected_layer.position.0 + selected_layer.width) * self.dpr,
+                y1: (selected_layer.position.1 + bleed) * self.dpr,
+            };
+            if edge.contains(point) {
+                self.mouse_state.interaction_mode =
+                    InteractionMode::ResizingVertical { bottom_side: false };
+
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::ResizeVertical,
+                };
+                self.emit(event);
+                return;
+            }
+
+            // Bottom side
+            let edge = Rect {
+                x0: (selected_layer.position.0) * self.dpr,
+                y0: (selected_layer.position.1 + selected_layer.height - bleed) * self.dpr,
+                x1: (selected_layer.position.0 + selected_layer.width) * self.dpr,
+                y1: (selected_layer.position.1 + selected_layer.height + bleed) * self.dpr,
+            };
+            if edge.contains(point) {
+                self.mouse_state.interaction_mode =
+                    InteractionMode::ResizingVertical { bottom_side: true };
+
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::ResizeVertical,
+                };
+                self.emit(event);
+                return;
+            }
+
+            // Didn't find an interaction? Revert back to selecting.
+            if self.mouse_state.interaction_mode != InteractionMode::Selecting {
+                self.mouse_state.interaction_mode = InteractionMode::Selecting;
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::Default,
+                };
+                self.emit(event);
+            }
+        }
+
+        // Object is selected and we're clicked? Must be dragging.
+        if self.mouse_state.clicked {
+            self.mouse_state.interaction_mode = InteractionMode::Dragging;
+            return;
+        }
     }
 
     /// Handle mouse move on canvas.
@@ -260,11 +382,9 @@ impl AppState {
         // Handle "dragging" functionality
         match self.mouse_state.interaction_mode {
             // Draw selection box
-            InteractionMode::Idle => {}
+            InteractionMode::Idle => self.handle_interaction_selecting(x, y),
             // Enable dragging/movement of layer
-            InteractionMode::Selecting => {
-                self.mouse_state.interaction_mode = InteractionMode::Dragging;
-            }
+            InteractionMode::Selecting => self.handle_interaction_selecting(x, y),
             // Move layer/object
             InteractionMode::Dragging => {
                 // Get distance of drag (aka "delta") and remove resolution (aka scale to CSS-space)
@@ -282,6 +402,14 @@ impl AppState {
                     self.emit(event);
                 }
             }
+            InteractionMode::ResizingHorizontal { right_side: _ } => {
+                self.handle_interaction_selecting(x, y);
+            }
+            InteractionMode::ResizingVertical { bottom_side: _ } => {
+                self.handle_interaction_selecting(x, y);
+            }
+            InteractionMode::ResizingCorner => {}
+            InteractionMode::Rotating => {}
         }
 
         // Update last position last (in case anything needs to use it for delta math)

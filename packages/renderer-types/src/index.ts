@@ -6,4 +6,5 @@ export * from "./DragLayerUpdate";
 export * from "./FrameLayout";
 export * from "./LayerColor";
 export * from "./LayerKind";
+export * from "./MouseCursors";
 export * from "./UpdateLayer";

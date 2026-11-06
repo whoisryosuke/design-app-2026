@@ -1,7 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useAtomValue } from "jotai";
 import { designEngineAtom } from "../../../store/renderer";
 import { css } from "../../../../styled-system/css";
+import type { MouseCursors } from "design-app-renderer-types";
+import { currentMouseCursorAtom } from "../../../store/app";
+
+const CURSOR_MAP: Record<MouseCursors, CSSProperties["cursor"]> = {
+  Default: "default",
+  Pointer: "pointer",
+  Move: "move",
+  ResizeHorizontal: "ew-resize",
+  ResizeVertical: "ns-resize",
+  ResizeDiagonalNwSe: "nwse-resize",
+  ResizeDiagonalNeSw: "nesw-resize",
+  Rotate: "nwse-resize",
+};
 
 const canvasStyle = css({
   position: "absolute",
@@ -20,6 +33,7 @@ const CANVAS_NAME = "preview";
 
 const DesignCanvas = () => {
   const designEngine = useAtomValue(designEngineAtom);
+  const mouseCursor = useAtomValue(currentMouseCursorAtom);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,7 +92,7 @@ const DesignCanvas = () => {
   }, [designEngine]);
 
   return (
-    <div className={canvasWrapper}>
+    <div className={canvasWrapper} style={{ cursor: CURSOR_MAP[mouseCursor] }}>
       <canvas id={CANVAS_NAME} className={canvasStyle} />
     </div>
   );
