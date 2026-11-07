@@ -1,7 +1,10 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import init, { DesignEngine } from "../pkg/renderer";
 import type { DesignCommand } from "design-app-renderer-types";
-import { generateDesignCommandAddLayer } from "./helpers/factories";
+import {
+  createCanvas,
+  generateDesignCommandAddLayer,
+} from "./helpers/factories";
 
 beforeAll(async () => {
   await init(); // fetches and instantiates the .wasm once for this file
@@ -71,12 +74,30 @@ describe("DesignEngine", () => {
       };
       const result = engine.dispatch(command_fetch_layers);
 
-      console.log("layers", result);
-
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(id);
     } finally {
       engine.free();
     }
+  });
+
+  describe("DesignRenderer", () => {
+    test("initializes renderer on canvas and starts rendering", async () => {
+      const canvasName = "preview";
+      createCanvas(canvasName);
+
+      const engine = new DesignEngine();
+
+      try {
+        const created = await engine.create_render(canvasName);
+        expect(created).toBe(true);
+
+        let result = engine.start_renderer();
+        expect(result).toBe(true);
+      } finally {
+        engine.stop_renderer();
+        engine.free();
+      }
+    });
   });
 });

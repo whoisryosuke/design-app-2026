@@ -32,3 +32,16 @@ export function generateDesignCommandAddLayer() {
   };
   return command;
 }
+
+export function createCanvas(
+  id: string,
+  size?: { width: number; height: number },
+) {
+  const canvas = document.createElement("canvas");
+  canvas.width = size?.width ?? 420;
+  canvas.height = size?.height ?? 200;
+  canvas.id = id;
+  document.body.appendChild(canvas);
+
+  return canvas;
+}
