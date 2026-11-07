@@ -20,6 +20,7 @@ use crate::{
         layers::Layers,
         layers_service::LayersService,
     },
+    utils::wasm::create_serializer,
 };
 
 #[derive(Default, Serialize, PartialEq, Clone)]
@@ -585,7 +586,7 @@ impl AppState {
     fn emit(&self, event: DesignEvent) {
         if let Ok(callback) = self.frontend_callback.try_borrow_mut().as_deref_mut() {
             if let Some(cb) = callback {
-                let serializer = Serializer::new().serialize_large_number_types_as_bigints(true);
+                let serializer = create_serializer();
                 if let Ok(js_event) = event.serialize(&serializer) {
                     cb.call1(&JsValue::NULL, &js_event);
                 }

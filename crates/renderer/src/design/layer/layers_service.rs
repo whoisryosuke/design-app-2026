@@ -1,7 +1,10 @@
-use crate::design::layer::{
-    layer::{DraftLayer, LayerListResponse, UpdateLayer},
-    layer_utils::{convert_default_key_to_u64, convert_u64_to_default_key},
-    layers::{DragLayerUpdate, Layers},
+use crate::{
+    design::layer::{
+        layer::{DraftLayer, LayerListResponse, UpdateLayer},
+        layer_utils::{convert_default_key_to_u64, convert_u64_to_default_key},
+        layers::{DragLayerUpdate, Layers},
+    },
+    utils::wasm::create_serializer,
 };
 use serde::Serialize;
 use slotmap::Key;
@@ -48,7 +51,10 @@ impl LayersService {
 
         let layer_response = Layers::create_layers_response(layers);
 
-        serde_wasm_bindgen::to_value(&layer_response).map_err(|err| JsError::new(&err.to_string()))
+        let serializer = create_serializer();
+        let result = layer_response.serialize(&serializer);
+
+        result.map_err(|err| JsError::new(&err.to_string()))
     }
 
     pub fn update_layer(&mut self, layer_id: u64, data: UpdateLayer) {
