@@ -56,7 +56,7 @@ describe("DesignEngine", () => {
     }
   });
 
-  test("stores new layer in backend and returns layer ID as bigint", () => {
+  test("stores new layer in backend and fetches layers in backend to confirm same layer ID", () => {
     const engine = new DesignEngine();
 
     try {
