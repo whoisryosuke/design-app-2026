@@ -26,3 +26,7 @@ dist-ssr
 crates/*/target
 target
 crates/**/pkg/
+
+# JS specific
+# Vitest reports and artifacts
+.vitest/
