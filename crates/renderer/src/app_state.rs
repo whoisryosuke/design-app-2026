@@ -191,11 +191,47 @@ impl AppState {
             });
 
             // Add box corners
-            let corners = create_corners_from_layer(&selected_layer, self.dpr);
-            draw_corner(&mut scene, &corners.top_left);
-            draw_corner(&mut scene, &corners.top_right);
-            draw_corner(&mut scene, &corners.bottom_left);
-            draw_corner(&mut scene, &corners.bottom_right);
+            // Top left
+            let corner_size = CORNER_SIZE * self.dpr;
+            let corner_padding = CORNER_SIZE / 2.0;
+            let top_left_x = (selected_layer.position.0 - corner_padding) * self.dpr;
+            let top_left_y = (selected_layer.position.1 - corner_padding) * self.dpr;
+            let top_left_corner = Rect {
+                x0: top_left_x,
+                y0: top_left_y,
+                x1: top_left_x + corner_size,
+                y1: top_left_y + corner_size,
+            };
+            draw_corner(&mut scene, &top_left_corner);
+
+            // Top Right
+            let top_right_x = top_left_x + (selected_layer.width * self.dpr);
+            let top_right_corner = Rect {
+                x0: top_right_x,
+                y0: top_left_y,
+                x1: top_right_x + corner_size,
+                y1: top_left_y + corner_size,
+            };
+            draw_corner(&mut scene, &top_right_corner);
+
+            // Bottom left
+            let bottom_left_y = top_left_y + (selected_layer.height * self.dpr);
+            let bottom_left_corner = Rect {
+                x0: top_left_x,
+                y0: bottom_left_y,
+                x1: top_left_x + corner_size,
+                y1: bottom_left_y + corner_size,
+            };
+            draw_corner(&mut scene, &bottom_left_corner);
+
+            // Bottom right
+            let bottom_right_corner = Rect {
+                x0: top_right_x,
+                y0: bottom_left_y,
+                x1: top_right_x + corner_size,
+                y1: bottom_left_y + corner_size,
+            };
+            draw_corner(&mut scene, &bottom_right_corner);
         }
 
         scene
@@ -293,42 +329,7 @@ impl AppState {
             // We draw invisible hit boxes around selected object and check if the
             // position is within one of them.
 
-            // Resizing - Corners
-            let corners = create_corners_from_layer(&selected_layer, self.dpr);
-            if corners.top_left.contains(point) {
-                self.send_design_event_mouse_cursor(MouseCursors::ResizeDiagonalNwSe);
-
-                self.mouse_state.hover_mode = InteractionMode::ResizingCorner {
-                    corner: ObjectCorner::TopLeft,
-                };
-                return;
-            }
-            if corners.top_right.contains(point) {
-                self.send_design_event_mouse_cursor(MouseCursors::ResizeDiagonalNeSw);
-
-                self.mouse_state.hover_mode = InteractionMode::ResizingCorner {
-                    corner: ObjectCorner::TopRight,
-                };
-                return;
-            }
-            if corners.bottom_left.contains(point) {
-                self.send_design_event_mouse_cursor(MouseCursors::ResizeDiagonalNeSw);
-
-                self.mouse_state.hover_mode = InteractionMode::ResizingCorner {
-                    corner: ObjectCorner::BottomLeft,
-                };
-                return;
-            }
-            if corners.bottom_right.contains(point) {
-                self.send_design_event_mouse_cursor(MouseCursors::ResizeDiagonalNwSe);
-
-                self.mouse_state.hover_mode = InteractionMode::ResizingCorner {
-                    corner: ObjectCorner::BottomRight,
-                };
-                return;
-            }
-
-            // Resizing - Left side
+            // Left side
             let bleed = EDGE_INTERACTION_BLEED / 2.0;
             let edge = Rect {
                 x0: (selected_layer.position.0 - bleed) * self.dpr,
@@ -337,14 +338,18 @@ impl AppState {
                 y1: (selected_layer.position.1 + selected_layer.height) * self.dpr,
             };
             if edge.contains(point) {
-                self.send_design_event_mouse_cursor(MouseCursors::ResizeHorizontal);
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::ResizeHorizontal,
+                };
+                self.emit(event);
 
                 self.mouse_state.hover_mode =
                     InteractionMode::ResizingHorizontal { right_side: false };
                 return;
             }
 
-            // Resizing - Right side
+            // Right side
             let edge = Rect {
                 x0: (selected_layer.position.0 + selected_layer.width - bleed) * self.dpr,
                 y0: selected_layer.position.1 * self.dpr,
@@ -352,14 +357,18 @@ impl AppState {
                 y1: (selected_layer.position.1 + selected_layer.height) * self.dpr,
             };
             if edge.contains(point) {
-                self.send_design_event_mouse_cursor(MouseCursors::ResizeHorizontal);
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::ResizeHorizontal,
+                };
+                self.emit(event);
 
                 self.mouse_state.hover_mode =
                     InteractionMode::ResizingHorizontal { right_side: true };
                 return;
             }
 
-            // Resizing - Top side
+            // Top side
             let edge = Rect {
                 x0: (selected_layer.position.0) * self.dpr,
                 y0: (selected_layer.position.1 - bleed) * self.dpr,
@@ -367,7 +376,11 @@ impl AppState {
                 y1: (selected_layer.position.1 + bleed) * self.dpr,
             };
             if edge.contains(point) {
-                self.send_design_event_mouse_cursor(MouseCursors::ResizeVertical);
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::ResizeVertical,
+                };
+                self.emit(event);
 
                 self.mouse_state.hover_mode =
                     InteractionMode::ResizingVertical { bottom_side: false };
@@ -383,7 +396,11 @@ impl AppState {
                 y1: (selected_layer.position.1 + selected_layer.height + bleed) * self.dpr,
             };
             if edge.contains(point) {
-                self.send_design_event_mouse_cursor(MouseCursors::ResizeVertical);
+                // Change icon in frontend
+                let event = DesignEvent::MouseCursorChanged {
+                    cursor: MouseCursors::ResizeVertical,
+                };
+                self.emit(event);
 
                 self.mouse_state.hover_mode =
                     InteractionMode::ResizingVertical { bottom_side: true };
@@ -404,11 +421,6 @@ impl AppState {
 
     fn send_design_event_layer_updated(&self, layer_id: u64, data: UpdateLayer) {
         let event = DesignEvent::LayerUpdated { layer_id, data };
-        self.emit(event);
-    }
-
-    fn send_design_event_mouse_cursor(&self, cursor: MouseCursors) {
-        let event = DesignEvent::MouseCursorChanged { cursor };
         self.emit(event);
     }
 
@@ -613,57 +625,4 @@ fn draw_corner(scene: &mut Scene, rect: &Rect) {
     scene.fill_rect(&rect);
     scene.set_paint(get_palette_color(AppColors::Primary));
     scene.stroke_rect(&rect);
-}
-
-pub struct LayerCornerRects {
-    top_left: Rect,
-    top_right: Rect,
-    bottom_left: Rect,
-    bottom_right: Rect,
-}
-
-fn create_corners_from_layer(layer: &Layer, dpr: f64) -> LayerCornerRects {
-    let corner_size = CORNER_SIZE * dpr;
-    let corner_padding = CORNER_SIZE / 2.0;
-    let top_left_x = (layer.position.0 - corner_padding) * dpr;
-    let top_left_y = (layer.position.1 - corner_padding) * dpr;
-    let top_left_corner = Rect {
-        x0: top_left_x,
-        y0: top_left_y,
-        x1: top_left_x + corner_size,
-        y1: top_left_y + corner_size,
-    };
-
-    // Top Right
-    let top_right_x = top_left_x + (layer.width * dpr);
-    let top_right_corner = Rect {
-        x0: top_right_x,
-        y0: top_left_y,
-        x1: top_right_x + corner_size,
-        y1: top_left_y + corner_size,
-    };
-
-    // Bottom left
-    let bottom_left_y = top_left_y + (layer.height * dpr);
-    let bottom_left_corner = Rect {
-        x0: top_left_x,
-        y0: bottom_left_y,
-        x1: top_left_x + corner_size,
-        y1: bottom_left_y + corner_size,
-    };
-
-    // Bottom right
-    let bottom_right_corner = Rect {
-        x0: top_right_x,
-        y0: bottom_left_y,
-        x1: top_right_x + corner_size,
-        y1: bottom_left_y + corner_size,
-    };
-
-    LayerCornerRects {
-        top_left: top_left_corner,
-        top_right: top_right_corner,
-        bottom_left: bottom_left_corner,
-        bottom_right: bottom_right_corner,
-    }
 }
