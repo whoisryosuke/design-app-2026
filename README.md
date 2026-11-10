@@ -6,7 +6,7 @@ The frontend is React, the backend is Rust (via WASM). It uses WebGPU through th
 
 ## Development
 
-1. Build the Rust code and compile the WASM + bindings. [Check README in renderer](crates\renderer\README.md) for commands.
+1. Build the Rust code and compile the WASM + bindings: `pnpm build:wasm`
 1. Run the web app: `pnpm start:web`
 
 ## How it works
@@ -17,6 +17,6 @@ Specifically we export the `DesignRenderer` struct and a few underlying methods 
 
 The `DesignRenderer` handles rendering designs to the provided `<canvas>`. It keeps the renderer backend initialized inside, which resources for and instances of WebGPU (`wgpu`) and Vello (`vello_gpu`). And it also hold any necessary app state, like the "layers" with design data.
 
-The `DesignRenderer` gets initialized using the `create()` method (see example linked above) and then we run a `requestAnimationFrame` loop that handles "animating" the canvas. This allow us to draw a frame 60+ FPS and handle things like a user draggingg an object, or animating design elements.
+The `DesignRenderer` gets initialized using the `create()` method (see example linked above) and then we run a `requestAnimationFrame` loop using `run()` that handles "animating" the canvas. This allow us to draw a frame 60+ FPS and handle things like a user dragging an object, or animating design elements.
 
 The user controls the design by sending commands (aka `DesignCommand`) to WASM backend via the `DesignRenderer.dispatch()` method. These commands range from adding or selecting a specific object/layer, or exporting the canvas data as an image.
